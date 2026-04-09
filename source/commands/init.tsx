@@ -1,13 +1,15 @@
 import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 
 import React, {useEffect, useState} from 'react';
-import {Text} from 'ink';
+import {Box, Text} from 'ink';
+import Spinner from 'ink-spinner';
 import zod from 'zod';
 
-import {writeConfig} from '../lib/config.js';
+import {type CliConfig, writeConfig} from '../lib/config.js';
 import {createSignerFromKeypairFile} from '../lib/umbra/signer.js';
 import {DEFAULT_INDEXER_ENDPOINT, NETWORK_DEFAULTS} from '../lib/constants.js';
-import {DEFAULT_KEYPAIR_PATH} from '../lib/paths.js';
+import {CONFIG_PATH, DEFAULT_KEYPAIR_PATH} from '../lib/paths.js';
 
 export const options = zod.object({
 	keypair: zod
@@ -39,15 +41,29 @@ type Props = {
 
 type State =
 	| {status: 'running'}
-	| {status: 'success'}
+	| {status: 'success'; config: CliConfig}
 	| {status: 'error'; message: string};
+
+function shortenPath(p: string): string {
+	return p.replace(os.homedir(), '~');
+}
+
+function Row({label, value}: {label: string; value: string}) {
+	return (
+		<Box>
+			<Box width={14}>
+				<Text dimColor>{label}</Text>
+			</Box>
+			<Text>{value}</Text>
+		</Box>
+	);
+}
 
 export default function Init({options: opts}: Props) {
 	const [state, setState] = useState<State>({status: 'running'});
 
 	useEffect(() => {
 		async function run() {
-			// Verify the keypair file exists
 			try {
 				await fs.access(opts.keypair);
 			} catch {
@@ -58,7 +74,6 @@ export default function Init({options: opts}: Props) {
 				return;
 			}
 
-			// Validate it is a Solana keypair
 			try {
 				await createSignerFromKeypairFile(opts.keypair);
 			} catch (err: unknown) {
@@ -70,8 +85,7 @@ export default function Init({options: opts}: Props) {
 			}
 
 			const networkDefaults = NETWORK_DEFAULTS[opts.network];
-
-			await writeConfig({
+			const config: CliConfig = {
 				network: opts.network,
 				rpcUrl: opts.rpcUrl ?? networkDefaults.rpcUrl,
 				rpcSubscriptionsUrl:
@@ -79,25 +93,51 @@ export default function Init({options: opts}: Props) {
 				walletPath: opts.keypair,
 				indexerApiEndpoint: opts.indexerEndpoint,
 				deferMasterSeedSignature: opts.deferMasterSeed,
-			});
+			};
 
-			setState({status: 'success'});
+			await writeConfig(config);
+			setState({status: 'success', config});
 		}
 
 		void run();
 	}, []);
 
 	if (state.status === 'running') {
-		return <Text>Initializing...</Text>;
+		return (
+			<Box>
+				<Text color="cyan">
+					<Spinner type="dots" />
+				</Text>
+				<Text> Initializing Umbra CLI...</Text>
+			</Box>
+		);
 	}
 
 	if (state.status === 'error') {
-		return <Text color="red">Error: {state.message}</Text>;
+		return (
+			<Box flexDirection="column">
+				<Text color="red">✗ Initialization failed</Text>
+				<Box marginTop={1} marginLeft={2}>
+					<Text dimColor>{state.message}</Text>
+				</Box>
+			</Box>
+		);
 	}
 
+	const {config} = state;
 	return (
-		<Text color="green">
-			Umbra CLI initialized. Config saved to ~/.umbra-cli/config.json
-		</Text>
+		<Box flexDirection="column">
+			<Text color="green">✓ Umbra CLI initialized</Text>
+			<Box flexDirection="column" marginTop={1} marginLeft={2}>
+				<Row label="Network" value={config.network} />
+				<Row label="RPC" value={config.rpcUrl} />
+				<Row label="WebSocket" value={config.rpcSubscriptionsUrl} />
+				<Row label="Wallet" value={shortenPath(config.walletPath)} />
+				{config.indexerApiEndpoint && (
+					<Row label="Indexer" value={config.indexerApiEndpoint} />
+				)}
+				<Row label="Config" value={shortenPath(CONFIG_PATH)} />
+			</Box>
+		</Box>
 	);
 }
