@@ -16,6 +16,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"@solana/kit": "^6.7.0",
 		"@umbra-privacy/sdk": "^3.0.0",
 		"@umbra-privacy/web-zk-prover": "^2.0.1",
 		"ink": "^4.1.0",
