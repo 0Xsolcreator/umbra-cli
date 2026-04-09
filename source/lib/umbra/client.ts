@@ -1,4 +1,9 @@
-import {type GetUmbraClientArgs, type GetUmbraClientDeps, getUmbraClient} from '@umbra-privacy/sdk';
+import {
+	type GetUmbraClientArgs,
+	type GetUmbraClientDeps,
+	getUmbraClient,
+} from '@umbra-privacy/sdk';
+
 import {ConfigNotFoundError, readConfig} from '../config.js';
 import {createFileSeedStorage} from './seed-storage.js';
 import {createSignerFromKeypairFile} from './signer.js';
@@ -22,7 +27,7 @@ export async function getClient(): Promise<UmbraClient> {
 		config = await readConfig();
 	} catch (err: unknown) {
 		if (err instanceof ConfigNotFoundError) {
-			throw new Error("Umbra client not initialized. Run 'umbra-cli register' first.");
+			throw new Error("Umbra client not initialized. Run 'umbra init' first.");
 		}
 
 		throw err;
@@ -37,7 +42,7 @@ export async function getClient(): Promise<UmbraClient> {
 			rpcUrl: config.rpcUrl,
 			rpcSubscriptionsUrl: config.rpcSubscriptionsUrl,
 			indexerApiEndpoint: config.indexerApiEndpoint,
-			deferMasterSeedSignature: true,
+			deferMasterSeedSignature: config.deferMasterSeedSignature,
 		},
 		{masterSeedStorage: createFileSeedStorage()},
 	);

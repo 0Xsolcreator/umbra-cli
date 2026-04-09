@@ -1,5 +1,6 @@
-import * as fs from 'node:fs/promises';
 import {createSignerFromPrivateKeyBytes} from '@umbra-privacy/sdk';
+
+import * as fs from 'node:fs/promises';
 
 export async function createSignerFromKeypairFile(
 	filePath: string,
@@ -11,16 +12,13 @@ export async function createSignerFromKeypairFile(
 		!Array.isArray(parsed) ||
 		parsed.length !== 64 ||
 		!(parsed as unknown[]).every(
-			(b) => typeof b === 'number' && b >= 0 && b <= 255,
+			b => typeof b === 'number' && b >= 0 && b <= 255,
 		)
 	) {
 		throw new Error(
 			`Invalid keypair file at "${filePath}": expected Solana keypair (64-byte array)`,
 		);
 	}
-
-	// Solana keypair files are [privateKeySeed (32 bytes) | publicKey (32 bytes)].
-	// createSignerFromPrivateKeyBytes expects only the 32-byte private key seed.
-	const privateKeyBytes = new Uint8Array(parsed as number[]).slice(0, 32);
+	const privateKeyBytes = new Uint8Array(parsed as number[]);
 	return createSignerFromPrivateKeyBytes(privateKeyBytes);
 }

@@ -8,13 +8,14 @@ const CliConfigSchema = zod.object({
 	rpcSubscriptionsUrl: zod.string(),
 	walletPath: zod.string(),
 	indexerApiEndpoint: zod.string().optional(),
+	deferMasterSeedSignature: zod.boolean().default(false),
 });
 
 export type CliConfig = zod.infer<typeof CliConfigSchema>;
 
 export class ConfigNotFoundError extends Error {
 	constructor() {
-		super('Umbra CLI config not found. Run "umbra-cli register" to set up.');
+		super('Umbra CLI config not found. Run "umbra init" to set up.');
 		this.name = 'ConfigNotFoundError';
 	}
 }
