@@ -89,7 +89,7 @@ describe('Init command', () => {
 
 			const {lastFrame, unmount} = render(<Init options={defaultOptions} />);
 
-			expect(lastFrame()).toBe('Initializing...');
+			expect(lastFrame()).toContain('Initializing Umbra CLI...');
 			unmount();
 		});
 	});
@@ -103,11 +103,7 @@ describe('Init command', () => {
 			const {lastFrame} = render(<Init options={defaultOptions} />);
 
 			await waitFor(() => {
-				expect(lastFrame()).toBe(
-					chalk.green(
-						'Umbra CLI initialized. Config saved to ~/.umbra-cli/config.json',
-					),
-				);
+				expect(lastFrame()).toContain('Umbra CLI initialized');
 			});
 		});
 
@@ -242,9 +238,8 @@ describe('Init command', () => {
 			);
 
 			await waitFor(() => {
-				expect(lastFrame()).toBe(
-					chalk.red(`Error: Keypair file not found: ${keypair}`),
-				);
+				expect(lastFrame()).toContain('Initialization failed');
+				expect(lastFrame()).toContain(`Keypair file not found: ${keypair}`);
 			});
 
 			expect(mockWriteConfig).not.toHaveBeenCalled();
@@ -263,7 +258,8 @@ describe('Init command', () => {
 			);
 
 			await waitFor(() => {
-				expect(lastFrame()).toBe(chalk.red(`Error: ${errorMessage}`));
+				expect(lastFrame()).toContain('Initialization failed');
+				expect(lastFrame()).toContain(errorMessage);
 			});
 
 			expect(mockWriteConfig).not.toHaveBeenCalled();

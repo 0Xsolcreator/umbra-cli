@@ -112,12 +112,12 @@ describe('Register command', () => {
 					isUserCommitmentRegistered: true,
 					isActiveForAnonymousUsage: true,
 				},
-			}));
+			} as unknown as QueryUserAccountResult));
 
 			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
 
 			await waitFor(() => {
-				expect(lastFrame()).toContain('Already fully registered');
+				expect(lastFrame()).toContain('User already registered');
 			});
 
 			expect(mockGetUserRegistration).not.toHaveBeenCalled();
@@ -131,7 +131,7 @@ describe('Register command', () => {
 					isUserCommitmentRegistered: true,
 					isActiveForAnonymousUsage: false,
 				},
-			}));
+			} as unknown as QueryUserAccountResult));
 
 			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
 
@@ -150,7 +150,7 @@ describe('Register command', () => {
 					isUserCommitmentRegistered: false,
 					isActiveForAnonymousUsage: false,
 				},
-			}));
+			} as unknown as QueryUserAccountResult));
 
 			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
 
