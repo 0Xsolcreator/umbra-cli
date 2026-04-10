@@ -88,24 +88,7 @@ mock.module('@umbra-privacy/web-zk-prover', () => ({
 }));
 
 import Create from '../../../source/commands/utxo/create.js';
-
-// --- Helpers ---
-
-async function waitFor(fn: () => void, timeout = 1000): Promise<void> {
-	const start = Date.now();
-	let lastError: unknown;
-	while (Date.now() - start < timeout) {
-		try {
-			fn();
-			return;
-		} catch (error: unknown) {
-			lastError = error;
-			await Bun.sleep(10);
-		}
-	}
-
-	throw lastError;
-}
+import {waitFor} from '../../utils.js';
 
 const DEFAULT_ARGS = ['MintAddress111', 1_000_000n] as [string, bigint];
 const DEFAULT_OPTS = {from: 'public' as const, receiver: undefined};

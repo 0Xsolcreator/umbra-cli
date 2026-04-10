@@ -12,17 +12,13 @@ const mockGetClient = mock(async () => ({
 }));
 
 const mockWithdraw = mock(
-	async (
-		_destination: unknown,
-		_mint: unknown,
-		_amount: unknown,
-	) =>
+	async (_destination: unknown, _mint: unknown, _amount: unknown) =>
 		({
 			queueSignature: 'queueSig123',
 			callbackStatus: 'finalized',
 			callbackSignature: 'callbackSig456',
 			callbackElapsedMs: 1200,
-		}) as unknown as WithdrawResult,
+		} as unknown as WithdrawResult),
 );
 const mockGetWithdrawerFunction = mock((_args: unknown) => mockWithdraw);
 
@@ -46,24 +42,7 @@ mock.module('@umbra-privacy/sdk/errors', () => ({
 }));
 
 import Withdraw from '../../source/commands/withdraw.js';
-
-// --- Helpers ---
-
-async function waitFor(fn: () => void, timeout = 1000): Promise<void> {
-	const start = Date.now();
-	let lastError: unknown;
-	while (Date.now() - start < timeout) {
-		try {
-			fn();
-			return;
-		} catch (error: unknown) {
-			lastError = error;
-			await Bun.sleep(10);
-		}
-	}
-
-	throw lastError;
-}
+import {waitFor} from '../utils.js';
 
 const DEFAULT_ARGS = ['MintAddress111', 1_000_000n] as [string, bigint];
 const DEFAULT_OPTS = {destination: undefined};
@@ -83,13 +62,14 @@ describe('Withdraw command', () => {
 		mockGetWithdrawerFunction.mockImplementation(
 			(_args: unknown) => mockWithdraw,
 		);
-		mockWithdraw.mockImplementation(async () =>
-			({
-				queueSignature: 'queueSig123',
-				callbackStatus: 'finalized',
-				callbackSignature: 'callbackSig456',
-				callbackElapsedMs: 1200,
-			}) as unknown as WithdrawResult,
+		mockWithdraw.mockImplementation(
+			async () =>
+				({
+					queueSignature: 'queueSig123',
+					callbackStatus: 'finalized',
+					callbackSignature: 'callbackSig456',
+					callbackElapsedMs: 1200,
+				} as unknown as WithdrawResult),
 		);
 		mockIsEncryptedWithdrawalError.mockImplementation(() => false);
 	});
@@ -186,8 +166,9 @@ describe('Withdraw command', () => {
 		});
 
 		test('shows only queue signature when callback is absent', async () => {
-			mockWithdraw.mockImplementation(async () =>
-				({queueSignature: 'queueSigOnly'}) as unknown as WithdrawResult,
+			mockWithdraw.mockImplementation(
+				async () =>
+					({queueSignature: 'queueSigOnly'} as unknown as WithdrawResult),
 			);
 
 			const {lastFrame} = render(
@@ -225,7 +206,9 @@ describe('Withdraw command', () => {
 	describe('errors', () => {
 		test('shows error when getClient fails', async () => {
 			mockGetClient.mockImplementation(async () => {
-				throw new Error("Umbra client not initialized. Run 'umbra init' first.");
+				throw new Error(
+					"Umbra client not initialized. Run 'umbra init' first.",
+				);
 			});
 
 			const {lastFrame} = render(

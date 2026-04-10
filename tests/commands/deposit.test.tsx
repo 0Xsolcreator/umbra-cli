@@ -50,24 +50,7 @@ mock.module('@umbra-privacy/sdk/errors', () => ({
 }));
 
 import Deposit from '../../source/commands/deposit.js';
-
-// --- Helpers ---
-
-async function waitFor(fn: () => void, timeout = 1000): Promise<void> {
-	const start = Date.now();
-	let lastError: unknown;
-	while (Date.now() - start < timeout) {
-		try {
-			fn();
-			return;
-		} catch (error: unknown) {
-			lastError = error;
-			await Bun.sleep(10);
-		}
-	}
-
-	throw lastError;
-}
+import {waitFor} from '../utils.js';
 
 const DEFAULT_ARGS = ['MintAddress111', 1_000_000n] as [string, bigint];
 const DEFAULT_OPTS = {recipient: undefined};
@@ -211,7 +194,9 @@ describe('Deposit command', () => {
 	describe('errors', () => {
 		test('shows error when getClient fails', async () => {
 			mockGetClient.mockImplementation(async () => {
-				throw new Error("Umbra client not initialized. Run 'umbra init' first.");
+				throw new Error(
+					"Umbra client not initialized. Run 'umbra init' first.",
+				);
 			});
 
 			const {lastFrame} = render(
