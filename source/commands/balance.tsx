@@ -1,12 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
-import Spinner from 'ink-spinner';
 import zod from 'zod';
 import {getEncryptedBalanceQuerierFunction} from '@umbra-privacy/sdk';
 import {type QueryEncryptedBalanceResult} from '@umbra-privacy/sdk/interfaces';
 import {address, type Address} from '@solana/kit';
 
 import {getClient} from '../lib/umbra/client.js';
+import {Spinner, ErrorMessage} from '../components/index.js';
+import {type ErrorState} from '../lib/errors.js';
 
 export const args = zod.array(zod.string()).describe('mint addresses to query');
 
@@ -19,7 +20,7 @@ type BalanceEntry = {mint: Address; result: QueryEncryptedBalanceResult};
 type State =
 	| {status: 'querying'}
 	| {status: 'success'; entries: BalanceEntry[]}
-	| {status: 'error'; message: string};
+	| ErrorState;
 
 function BalanceRow({mint, result}: BalanceEntry) {
 	const short = `${mint.slice(0, 4)}…${mint.slice(-4)}`;
@@ -94,27 +95,10 @@ export default function Balance({args: mints}: Props) {
 		void run();
 	}, []);
 
-	if (state.status === 'querying') {
-		return (
-			<Box>
-				<Text color="cyan">
-					<Spinner type="dots" />
-				</Text>
-				<Text> Fetching encrypted balances...</Text>
-			</Box>
-		);
-	}
-
-	if (state.status === 'error') {
-		return (
-			<Box flexDirection="column">
-				<Text color="red">✗ Balance query failed</Text>
-				<Box marginTop={1} marginLeft={2}>
-					<Text dimColor>{state.message}</Text>
-				</Box>
-			</Box>
-		);
-	}
+	if (state.status === 'querying')
+		return <Spinner label="Fetching encrypted balances..." />;
+	if (state.status === 'error')
+		return <ErrorMessage title="Balance query failed" detail={state.message} />;
 
 	return (
 		<Box flexDirection="column">

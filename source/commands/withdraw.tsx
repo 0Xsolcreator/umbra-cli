@@ -1,13 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
-import Spinner from 'ink-spinner';
 import zod from 'zod';
 import {getEncryptedBalanceToPublicBalanceDirectWithdrawerFunction} from '@umbra-privacy/sdk';
-import {isEncryptedWithdrawalError} from '@umbra-privacy/sdk/errors';
 import {address} from '@solana/kit';
 import {type U64} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../lib/umbra/client.js';
+import {Spinner, ErrorMessage} from '../components/index.js';
+import {formatWithdrawalError} from '../lib/errors.js';
+import {type ErrorState} from '../lib/errors.js';
 
 export const args = zod.tuple([
 	zod.string().describe('mint'),
@@ -29,7 +30,7 @@ type Props = {
 type State =
 	| {status: 'withdrawing'; stepLabel: string}
 	| {status: 'success'; queueSignature: string; callbackSignature?: string}
-	| {status: 'error'; message: string};
+	| ErrorState;
 
 export default function Withdraw({args: [mint, amount], options: opts}: Props) {
 	const [state, setState] = useState<State>({
@@ -64,71 +65,17 @@ export default function Withdraw({args: [mint, amount], options: opts}: Props) {
 					callbackSignature: result.callbackSignature,
 				});
 			} catch (err: unknown) {
-				let message: string;
-
-				if (isEncryptedWithdrawalError(err)) {
-					switch (err.stage) {
-						case 'validation': {
-							message = `Invalid arguments: ${err.message}`;
-							break;
-						}
-
-						case 'mint-fetch': {
-							message = `Could not fetch mint account — check RPC connectivity and mint address: ${err.message}`;
-							break;
-						}
-
-						case 'instruction-build': {
-							message = `Could not construct instruction — protocol state mismatch: ${err.message}`;
-							break;
-						}
-
-						case 'transaction-sign': {
-							message = 'Transaction signing cancelled.';
-							break;
-						}
-
-						case 'transaction-send': {
-							message = `${err.message} — check on-chain state before retrying.`;
-							break;
-						}
-
-						default: {
-							message = `Withdrawal failed at stage "${err.stage}": ${err.message}`;
-						}
-					}
-				} else {
-					message = err instanceof Error ? err.message : String(err);
-				}
-
-				setState({status: 'error', message});
+				setState({status: 'error', message: formatWithdrawalError(err)});
 			}
 		}
 
 		void run();
 	}, []);
 
-	if (state.status === 'withdrawing') {
-		return (
-			<Box>
-				<Text color="cyan">
-					<Spinner type="dots" />
-				</Text>
-				<Text> {state.stepLabel}</Text>
-			</Box>
-		);
-	}
-
-	if (state.status === 'error') {
-		return (
-			<Box flexDirection="column">
-				<Text color="red">✗ Withdrawal failed</Text>
-				<Box marginTop={1} marginLeft={2}>
-					<Text dimColor>{state.message}</Text>
-				</Box>
-			</Box>
-		);
-	}
+	if (state.status === 'withdrawing')
+		return <Spinner label={state.stepLabel} />;
+	if (state.status === 'error')
+		return <ErrorMessage title="Withdrawal failed" detail={state.message} />;
 
 	return (
 		<Box flexDirection="column">

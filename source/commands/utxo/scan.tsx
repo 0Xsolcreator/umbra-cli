@@ -1,12 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
-import Spinner from 'ink-spinner';
 import zod from 'zod';
-import {isFetchUtxosError} from '@umbra-privacy/sdk/errors';
 import {type U32} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
 import {createUtxoScanner} from '../../lib/umbra/scanner.js';
+import {
+	Spinner,
+	ErrorMessage,
+	UtxoGroup,
+	type UtxoEntry,
+} from '../../components/index.js';
+import {formatFetchUtxosError} from '../../lib/errors.js';
+import {type ErrorState} from '../../lib/errors.js';
 
 export const options = zod.object({
 	tree: zod.coerce
@@ -27,8 +33,6 @@ type Props = {
 	options: zod.infer<typeof options>;
 };
 
-type UtxoEntry = {amount: bigint; insertionIndex: bigint};
-
 type State =
 	| {status: 'scanning'; stepLabel: string}
 	| {
@@ -39,9 +43,11 @@ type State =
 			publicReceived: UtxoEntry[];
 			nextScanStartIndex: bigint;
 	  }
-	| {status: 'error'; message: string};
+	| ErrorState;
 
-function toEntries(utxos: {amount: bigint; insertionIndex: bigint}[]): UtxoEntry[] {
+function toEntries(
+	utxos: {amount: bigint; insertionIndex: bigint}[],
+): UtxoEntry[] {
 	return utxos.map(u => ({amount: u.amount, insertionIndex: u.insertionIndex}));
 }
 
@@ -80,71 +86,16 @@ export default function Scan({options: opts}: Props) {
 					nextScanStartIndex: result.nextScanStartIndex,
 				});
 			} catch (err: unknown) {
-				let message: string;
-
-				if (isFetchUtxosError(err)) {
-					switch (err.stage) {
-						case 'initialization': {
-							message = `Indexer not configured — set indexerApiEndpoint in your config: ${err.message}`;
-							break;
-						}
-
-						case 'validation': {
-							message = `Invalid scan parameters: ${err.message}`;
-							break;
-						}
-
-						case 'key-derivation': {
-							message = `Key derivation failed: ${err.message}`;
-							break;
-						}
-
-						case 'indexer-fetch': {
-							message = `Indexer unreachable — check your connection: ${err.message}`;
-							break;
-						}
-
-						case 'proof-fetch': {
-							message = `Merkle proof fetch failed: ${err.message}`;
-							break;
-						}
-
-						default: {
-							message = `Scan failed at stage "${err.stage}": ${err.message}`;
-						}
-					}
-				} else {
-					message = err instanceof Error ? err.message : String(err);
-				}
-
-				setState({status: 'error', message});
+				setState({status: 'error', message: formatFetchUtxosError(err)});
 			}
 		}
 
 		void run();
 	}, []);
 
-	if (state.status === 'scanning') {
-		return (
-			<Box>
-				<Text color="cyan">
-					<Spinner type="dots" />
-				</Text>
-				<Text> {state.stepLabel}</Text>
-			</Box>
-		);
-	}
-
-	if (state.status === 'error') {
-		return (
-			<Box flexDirection="column">
-				<Text color="red">✗ Scan failed</Text>
-				<Box marginTop={1} marginLeft={2}>
-					<Text dimColor>{state.message}</Text>
-				</Box>
-			</Box>
-		);
-	}
+	if (state.status === 'scanning') return <Spinner label={state.stepLabel} />;
+	if (state.status === 'error')
+		return <ErrorMessage title="Scan failed" detail={state.message} />;
 
 	const total =
 		state.selfBurnable.length +
@@ -184,27 +135,11 @@ export default function Scan({options: opts}: Props) {
 					</>
 				)}
 				<Box marginTop={1}>
-					<Text dimColor>Next scan start: {state.nextScanStartIndex.toString()}</Text>
-				</Box>
-			</Box>
-		</Box>
-	);
-}
-
-function UtxoGroup({label, utxos}: {label: string; utxos: UtxoEntry[]}) {
-	return (
-		<Box flexDirection="column" marginBottom={1}>
-			<Text>
-				{label}{' '}
-				<Text color="cyan">{utxos.length}</Text>
-			</Text>
-			{utxos.map(u => (
-				<Box key={u.insertionIndex.toString()} marginLeft={2}>
 					<Text dimColor>
-						· {u.amount.toString()} (index {u.insertionIndex.toString()})
+						Next scan start: {state.nextScanStartIndex.toString()}
 					</Text>
 				</Box>
-			))}
+			</Box>
 		</Box>
 	);
 }

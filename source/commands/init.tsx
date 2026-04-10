@@ -1,15 +1,16 @@
 import * as fs from 'node:fs/promises';
-import * as os from 'node:os';
 
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
-import Spinner from 'ink-spinner';
 import zod from 'zod';
+import {Spinner, ErrorMessage, Row} from '../components/index.js';
 
 import {type CliConfig, writeConfig} from '../lib/config.js';
 import {createSignerFromKeypairFile} from '../lib/umbra/signer.js';
 import {DEFAULT_INDEXER_ENDPOINT, NETWORK_DEFAULTS} from '../lib/constants.js';
 import {CONFIG_PATH, DEFAULT_KEYPAIR_PATH} from '../lib/paths.js';
+import {shortenPath} from '../lib/format.js';
+import {type ErrorState} from '../lib/errors.js';
 
 export const options = zod.object({
 	keypair: zod
@@ -42,22 +43,7 @@ type Props = {
 type State =
 	| {status: 'running'}
 	| {status: 'success'; config: CliConfig}
-	| {status: 'error'; message: string};
-
-function shortenPath(p: string): string {
-	return p.replace(os.homedir(), '~');
-}
-
-function Row({label, value}: {label: string; value: string}) {
-	return (
-		<Box>
-			<Box width={14}>
-				<Text dimColor>{label}</Text>
-			</Box>
-			<Text>{value}</Text>
-		</Box>
-	);
-}
+	| ErrorState;
 
 export default function Init({options: opts}: Props) {
 	const [state, setState] = useState<State>({status: 'running'});
@@ -102,27 +88,12 @@ export default function Init({options: opts}: Props) {
 		void run();
 	}, []);
 
-	if (state.status === 'running') {
+	if (state.status === 'running')
+		return <Spinner label="Initializing Umbra CLI..." />;
+	if (state.status === 'error')
 		return (
-			<Box>
-				<Text color="cyan">
-					<Spinner type="dots" />
-				</Text>
-				<Text> Initializing Umbra CLI...</Text>
-			</Box>
+			<ErrorMessage title="Initialization failed" detail={state.message} />
 		);
-	}
-
-	if (state.status === 'error') {
-		return (
-			<Box flexDirection="column">
-				<Text color="red">✗ Initialization failed</Text>
-				<Box marginTop={1} marginLeft={2}>
-					<Text dimColor>{state.message}</Text>
-				</Box>
-			</Box>
-		);
-	}
 
 	const {config} = state;
 	return (

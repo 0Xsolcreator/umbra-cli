@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
-import Spinner from 'ink-spinner';
 import zod from 'zod';
 import {
 	getSelfClaimableUtxoToEncryptedBalanceClaimerFunction,
@@ -8,7 +7,7 @@ import {
 	getReceiverClaimableUtxoToEncryptedBalanceClaimerFunction,
 	getUmbraRelayer,
 } from '@umbra-privacy/sdk';
-import {isClaimUtxoError, isFetchUtxosError} from '@umbra-privacy/sdk/errors';
+import {isFetchUtxosError} from '@umbra-privacy/sdk/errors';
 import {
 	getClaimReceiverClaimableUtxoIntoEncryptedBalanceProver,
 	getClaimSelfClaimableUtxoIntoPublicBalanceProver,
@@ -17,6 +16,9 @@ import {type U32} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
 import {createUtxoScanner} from '../../lib/umbra/scanner.js';
+import {Spinner, ErrorMessage} from '../../components/index.js';
+import {formatFetchUtxosError, formatClaimUtxoError} from '../../lib/errors.js';
+import {type ErrorState} from '../../lib/errors.js';
 
 export const options = zod.object({
 	tree: zod.coerce
@@ -58,7 +60,7 @@ type State =
 	| {status: 'claiming'; stepLabel: string}
 	| {status: 'nothing'}
 	| {status: 'success'; claimedCount: number; batches: BatchInfo[]}
-	| {status: 'error'; message: string};
+	| ErrorState;
 
 function collectBatches(
 	batchMap: Map<bigint, {status: string; txSignature?: string}>,
@@ -112,7 +114,9 @@ export default function Claim({options: opts}: Props) {
 
 				setState({
 					status: 'claiming',
-					stepLabel: `Found ${totalFound} UTXO${totalFound === 1 ? '' : 's'} — generating proofs and claiming...`,
+					stepLabel: `Found ${totalFound} UTXO${
+						totalFound === 1 ? '' : 's'
+					} — generating proofs and claiming...`,
 				});
 
 				// --- Claim ---
@@ -132,11 +136,10 @@ export default function Claim({options: opts}: Props) {
 					} else {
 						const zkProver =
 							getClaimReceiverClaimableUtxoIntoEncryptedBalanceProver();
-						const claim =
-							getSelfClaimableUtxoToEncryptedBalanceClaimerFunction(
-								{client},
-								{fetchBatchMerkleProof, zkProver, relayer},
-							);
+						const claim = getSelfClaimableUtxoToEncryptedBalanceClaimerFunction(
+							{client},
+							{fetchBatchMerkleProof, zkProver, relayer},
+						);
 						const result = await claim(selfBurnableAll);
 						allBatches.push(...collectBatches(result.batches));
 					}
@@ -160,54 +163,9 @@ export default function Claim({options: opts}: Props) {
 					batches: allBatches,
 				});
 			} catch (err: unknown) {
-				let message: string;
-
-				if (isFetchUtxosError(err)) {
-					switch (err.stage) {
-						case 'initialization': {
-							message = `Indexer not configured — set indexerApiEndpoint in your config: ${err.message}`;
-							break;
-						}
-
-						case 'indexer-fetch': {
-							message = `Indexer unreachable — check your connection: ${err.message}`;
-							break;
-						}
-
-						default: {
-							message = `Scan failed at stage "${err.stage}": ${err.message}`;
-						}
-					}
-				} else if (isClaimUtxoError(err)) {
-					switch (err.stage) {
-						case 'zk-proof-generation': {
-							message = `ZK proof generation failed — try again: ${err.message}`;
-							break;
-						}
-
-						case 'transaction-sign': {
-							message = 'Transaction signing cancelled.';
-							break;
-						}
-
-						case 'transaction-validate': {
-							message = `Pre-flight simulation failed — Merkle proof may be stale, re-scan and retry: ${err.message}`;
-							break;
-						}
-
-						case 'transaction-send': {
-							message = `${err.message} — verify on-chain before retrying, nullifier may already be burned.`;
-							break;
-						}
-
-						default: {
-							message = `Claim failed at stage "${err.stage}": ${err.message}`;
-						}
-					}
-				} else {
-					message = err instanceof Error ? err.message : String(err);
-				}
-
+				const message = isFetchUtxosError(err)
+					? formatFetchUtxosError(err)
+					: formatClaimUtxoError(err);
 				setState({status: 'error', message});
 			}
 		}
@@ -215,27 +173,10 @@ export default function Claim({options: opts}: Props) {
 		void run();
 	}, []);
 
-	if (state.status === 'scanning' || state.status === 'claiming') {
-		return (
-			<Box>
-				<Text color="cyan">
-					<Spinner type="dots" />
-				</Text>
-				<Text> {state.stepLabel}</Text>
-			</Box>
-		);
-	}
-
-	if (state.status === 'error') {
-		return (
-			<Box flexDirection="column">
-				<Text color="red">✗ Claim failed</Text>
-				<Box marginTop={1} marginLeft={2}>
-					<Text dimColor>{state.message}</Text>
-				</Box>
-			</Box>
-		);
-	}
+	if (state.status === 'scanning' || state.status === 'claiming')
+		return <Spinner label={state.stepLabel} />;
+	if (state.status === 'error')
+		return <ErrorMessage title="Claim failed" detail={state.message} />;
 
 	if (state.status === 'nothing') {
 		return <Text color="yellow">No claimable UTXOs found in this range</Text>;

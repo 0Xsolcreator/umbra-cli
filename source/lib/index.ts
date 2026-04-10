@@ -1,14 +1,21 @@
+/** Config */
 export {
 	type CliConfig,
 	ConfigNotFoundError,
 	readConfig,
 	writeConfig,
 } from './config.js';
+
+/** Umbra SDK client and primitives */
 export {getClient, setClient} from './umbra/client.js';
+
 export {createFileSeedStorage} from './umbra/seed-storage.js';
 export {createUtxoScanner} from './umbra/scanner.js';
 export {createSignerFromKeypairFile} from './umbra/signer.js';
+
+/** Error formatting */
 export {
+	type ErrorState,
 	formatError,
 	formatRegistrationError,
 	formatDepositError,
@@ -16,6 +23,7 @@ export {
 	formatCreateUtxoError,
 	formatFetchUtxosError,
 	formatClaimUtxoError,
-	type ErrorState,
 } from './errors.js';
+
+/** Formatting utilities */
 export {shortenPath} from './format.js';
