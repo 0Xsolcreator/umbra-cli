@@ -2,7 +2,6 @@
 
 import {beforeEach, describe, expect, mock, test} from 'bun:test';
 import React from 'react';
-import chalk from 'chalk';
 import {render} from 'ink-testing-library';
 
 // --- Module mocks ---

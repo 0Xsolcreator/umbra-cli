@@ -6,17 +6,28 @@ import {render} from 'ink-testing-library';
 
 // --- Module mocks ---
 
+type UtxoData = {amount: bigint; insertionIndex: bigint};
+type ScanResult = {
+	selfBurnable: UtxoData[];
+	received: UtxoData[];
+	publicSelfBurnable: UtxoData[];
+	publicReceived: UtxoData[];
+	nextScanStartIndex: bigint;
+};
+
 const mockGetClient = mock(async () => ({
 	signer: {address: 'TestWalletAddress'},
 }));
 
-const mockScan = mock(async (_tree: unknown, _start: unknown, _end?: unknown) => ({
-	selfBurnable: [],
-	received: [],
-	publicSelfBurnable: [],
-	publicReceived: [],
-	nextScanStartIndex: 0n,
-}));
+const mockScan = mock(
+	async (_tree: unknown, _start: unknown, _end?: unknown): Promise<ScanResult> => ({
+		selfBurnable: [],
+		received: [],
+		publicSelfBurnable: [],
+		publicReceived: [],
+		nextScanStartIndex: 0n,
+	}),
+);
 const mockGetScannerFunction = mock((_args: unknown) => mockScan);
 
 const mockIsFetchUtxosError = mock((_err: unknown) => false);
@@ -68,7 +79,7 @@ describe('Scan UTXO command', () => {
 			signer: {address: 'TestWalletAddress'},
 		}));
 		mockGetScannerFunction.mockImplementation((_args: unknown) => mockScan);
-		mockScan.mockImplementation(async () => ({
+		mockScan.mockImplementation(async (): Promise<ScanResult> => ({
 			selfBurnable: [],
 			received: [],
 			publicSelfBurnable: [],

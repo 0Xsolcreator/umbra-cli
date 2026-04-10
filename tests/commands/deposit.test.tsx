@@ -3,9 +3,14 @@
 import {beforeEach, describe, expect, mock, test} from 'bun:test';
 import React from 'react';
 import {render} from 'ink-testing-library';
-import type {DepositResult} from '@umbra-privacy/sdk';
-
 // --- Module mocks ---
+
+type MockDepositResult = {
+	queueSignature: string;
+	callbackStatus?: string;
+	callbackSignature?: string;
+	callbackElapsedMs?: number;
+};
 
 const mockGetClient = mock(async () => ({
 	signer: {address: 'TestWalletAddress'},
@@ -16,7 +21,7 @@ const mockDeposit = mock(
 		_destination: unknown,
 		_mint: unknown,
 		_amount: unknown,
-	): Promise<DepositResult> => ({
+	): Promise<MockDepositResult> => ({
 		queueSignature: 'queueSig123',
 		callbackStatus: 'finalized',
 		callbackSignature: 'callbackSig456',

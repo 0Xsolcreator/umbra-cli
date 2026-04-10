@@ -28,20 +28,29 @@ const mockGetPublicReceiverCreatorFunction = mock(
 );
 
 // Encrypted-balance creator functions
-const mockEncryptedSelfCreate = mock(async (_args: unknown) => ({
-	createProofAccountSignature: 'proofAccSig',
-	queueSignature: 'queueSig123',
-	callbackSignature: 'callbackSig456',
-}));
+type EncryptedCreateResult = {
+	createProofAccountSignature: string;
+	queueSignature: string;
+	callbackSignature?: string;
+};
+const mockEncryptedSelfCreate = mock(
+	async (_args: unknown): Promise<EncryptedCreateResult> => ({
+		createProofAccountSignature: 'proofAccSig',
+		queueSignature: 'queueSig123',
+		callbackSignature: 'callbackSig456',
+	}),
+);
 const mockGetEncryptedSelfCreatorFunction = mock(
 	(_args: unknown, _deps: unknown) => mockEncryptedSelfCreate,
 );
 
-const mockEncryptedReceiverCreate = mock(async (_args: unknown) => ({
-	createProofAccountSignature: 'proofAccSig',
-	queueSignature: 'queueSig123',
-	callbackSignature: 'callbackSig456',
-}));
+const mockEncryptedReceiverCreate = mock(
+	async (_args: unknown): Promise<EncryptedCreateResult> => ({
+		createProofAccountSignature: 'proofAccSig',
+		queueSignature: 'queueSig123',
+		callbackSignature: 'callbackSig456',
+	}),
+);
 const mockGetEncryptedReceiverCreatorFunction = mock(
 	(_args: unknown, _deps: unknown) => mockEncryptedReceiverCreate,
 );
