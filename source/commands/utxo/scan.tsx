@@ -2,20 +2,20 @@ import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
 import Spinner from 'ink-spinner';
 import zod from 'zod';
-import {getClaimableUtxoScannerFunction} from '@umbra-privacy/sdk';
 import {isFetchUtxosError} from '@umbra-privacy/sdk/errors';
 import {type U32} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
+import {createUtxoScanner} from '../../lib/umbra/scanner.js';
 
 export const options = zod.object({
 	tree: zod.coerce
 		.bigint()
-		.default(0n)
+		.optional()
 		.describe('Merkle tree index to scan (default: 0)'),
 	start: zod.coerce
 		.bigint()
-		.default(0n)
+		.optional()
 		.describe('Start insertion index, inclusive (default: 0)'),
 	end: zod.coerce
 		.bigint()
@@ -56,15 +56,18 @@ export default function Scan({options: opts}: Props) {
 			try {
 				const client = await getClient();
 
+				const tree = opts.tree ?? 0n;
+				const start = opts.start ?? 0n;
+
 				setState({
 					status: 'scanning',
-					stepLabel: `Scanning tree ${opts.tree}...`,
+					stepLabel: `Scanning tree ${tree}...`,
 				});
 
-				const scan = getClaimableUtxoScannerFunction({client});
+				const scan = createUtxoScanner(client);
 				const result = await scan(
-					opts.tree as U32,
-					opts.start as U32,
+					tree as U32,
+					start as U32,
 					opts.end !== undefined ? (opts.end as U32) : undefined,
 				);
 
