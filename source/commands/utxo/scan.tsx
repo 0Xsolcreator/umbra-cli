@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
 import zod from 'zod';
-import {type U32} from '@umbra-privacy/sdk/types';
 
+import {scanAllUtxos} from '../../lib/umbra/scanner.js';
 import {getClient} from '../../lib/umbra/client.js';
-import {createUtxoScanner} from '../../lib/umbra/scanner.js';
 import {
 	Spinner,
 	ErrorMessage,
@@ -27,6 +26,12 @@ export const options = zod.object({
 		.bigint()
 		.optional()
 		.describe('End insertion index, inclusive (default: end of tree)'),
+	pageSize: zod.coerce
+		.bigint()
+		.optional()
+		.describe(
+			'Number of indices to cover per request for paginated scanning (default: entire range)',
+		),
 });
 
 type Props = {
@@ -70,11 +75,22 @@ export default function Scan({options: opts}: Props) {
 					stepLabel: `Scanning tree ${tree}...`,
 				});
 
-				const scan = createUtxoScanner(client);
-				const result = await scan(
-					tree as U32,
-					start as U32,
-					opts.end !== undefined ? (opts.end as U32) : undefined,
+				const result = await scanAllUtxos(
+					client,
+					tree,
+					start,
+					opts.end,
+					{
+						pageSize: opts.pageSize,
+						onProgress({page, nextStart}) {
+							if (opts.pageSize !== undefined) {
+								setState({
+									status: 'scanning',
+									stepLabel: `Scanning tree ${tree} — page ${page + 1} done, next index ${nextStart}...`,
+								});
+							}
+						},
+					},
 				);
 
 				setState({

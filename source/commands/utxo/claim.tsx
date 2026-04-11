@@ -12,10 +12,9 @@ import {
 	getClaimReceiverClaimableUtxoIntoEncryptedBalanceProver,
 	getClaimSelfClaimableUtxoIntoPublicBalanceProver,
 } from '@umbra-privacy/web-zk-prover';
-import {type U32} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
-import {createUtxoScanner} from '../../lib/umbra/scanner.js';
+import {scanAllUtxos} from '../../lib/umbra/scanner.js';
 import {Spinner, ErrorMessage} from '../../components/index.js';
 import {formatFetchUtxosError, formatClaimUtxoError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
@@ -33,6 +32,12 @@ export const options = zod.object({
 		.bigint()
 		.optional()
 		.describe('End insertion index, inclusive (default: end of tree)'),
+	pageSize: zod.coerce
+		.bigint()
+		.optional()
+		.describe(
+			'Number of indices to cover per request for paginated scanning (default: entire range)',
+		),
 	to: zod
 		.enum(['encrypted', 'public'])
 		.default('encrypted')
@@ -90,11 +95,23 @@ export default function Claim({options: opts}: Props) {
 				}
 
 				// --- Scan ---
-				const scan = createUtxoScanner(client);
-				const scanResult = await scan(
-					(opts.tree ?? 0n) as U32,
-					(opts.start ?? 0n) as U32,
-					opts.end !== undefined ? (opts.end as U32) : undefined,
+				const tree = opts.tree ?? 0n;
+				const scanResult = await scanAllUtxos(
+					client,
+					tree,
+					opts.start ?? 0n,
+					opts.end,
+					{
+						pageSize: opts.pageSize,
+						onProgress({page, nextStart}) {
+							if (opts.pageSize !== undefined) {
+								setState({
+									status: 'scanning',
+									stepLabel: `Scanning tree ${tree} — page ${page + 1} done, next index ${nextStart}...`,
+								});
+							}
+						},
+					},
 				);
 
 				const selfBurnableAll = [

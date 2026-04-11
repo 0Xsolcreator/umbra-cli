@@ -10,7 +10,8 @@ export {
 export {getClient, setClient} from './umbra/client.js';
 
 export {createFileSeedStorage} from './umbra/seed-storage.js';
-export {createUtxoScanner} from './umbra/scanner.js';
+export {createUtxoScanner, scanAllUtxos} from './umbra/scanner.js';
+export type {ScanAllOptions, ScanAllResult, ScanProgress} from './umbra/scanner.js';
 export {createSignerFromKeypairFile} from './umbra/signer.js';
 
 /** Error formatting */
