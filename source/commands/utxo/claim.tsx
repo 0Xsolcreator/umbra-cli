@@ -14,7 +14,7 @@ import {
 } from '@umbra-privacy/web-zk-prover';
 
 import {getClient} from '../../lib/umbra/client.js';
-import {scanAllUtxos} from '../../lib/umbra/scanner.js';
+import {scanAcrossTrees} from '../../lib/umbra/scanner.js';
 import {Spinner, ErrorMessage} from '../../components/index.js';
 import {formatFetchUtxosError, formatClaimUtxoError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
@@ -23,7 +23,15 @@ export const options = zod.object({
 	tree: zod.coerce
 		.bigint()
 		.optional()
-		.describe('Merkle tree index to scan (default: 0)'),
+		.describe('First Merkle tree index to scan (default: 0)'),
+	endTree: zod.coerce
+		.bigint()
+		.optional()
+		.describe('Last Merkle tree index to scan, inclusive (default: same as --tree)'),
+	allTrees: zod
+		.boolean()
+		.default(false)
+		.describe('Scan all trees from --tree until no more are found'),
 	start: zod.coerce
 		.bigint()
 		.optional()
@@ -95,21 +103,32 @@ export default function Claim({options: opts}: Props) {
 				}
 
 				// --- Scan ---
-				const tree = opts.tree ?? 0n;
-				const scanResult = await scanAllUtxos(
+				const startTree = opts.tree ?? 0n;
+				const endTree = opts.allTrees
+					? undefined
+					: (opts.endTree ?? startTree);
+
+				const scanResult = await scanAcrossTrees(
 					client,
-					tree,
+					startTree,
+					endTree,
 					opts.start ?? 0n,
 					opts.end,
 					{
 						pageSize: opts.pageSize,
-						onProgress({page, nextStart}) {
-							if (opts.pageSize !== undefined) {
-								setState({
-									status: 'scanning',
-									stepLabel: `Scanning tree ${tree} — page ${page + 1} done, next index ${nextStart}...`,
-								});
-							}
+						onProgress({treeIndex, page, nextStart}) {
+							const treeLabel =
+								endTree !== undefined
+									? `tree ${treeIndex} of ${endTree}`
+									: `tree ${treeIndex}`;
+							const pageLabel =
+								opts.pageSize !== undefined
+									? ` — page ${page + 1} done, next index ${nextStart}`
+									: '';
+							setState({
+								status: 'scanning',
+								stepLabel: `Scanning ${treeLabel}${pageLabel}...`,
+							});
 						},
 					},
 				);
