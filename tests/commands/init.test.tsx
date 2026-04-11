@@ -30,28 +30,7 @@ import {
 	NETWORK_DEFAULTS,
 } from '../../source/lib/constants.js';
 import {DEFAULT_KEYPAIR_PATH} from '../../source/lib/paths.js';
-
-// --- Helpers ---
-
-/**
- * Polls `fn` (an assertion callback) until it stops throwing or the
- * timeout elapses. Mirrors the behaviour of @testing-library/dom waitFor.
- */
-async function waitFor(fn: () => void, timeout = 1000): Promise<void> {
-	const start = Date.now();
-	let lastError: unknown;
-	while (Date.now() - start < timeout) {
-		try {
-			fn();
-			return;
-		} catch (error: unknown) {
-			lastError = error;
-			await Bun.sleep(10);
-		}
-	}
-
-	throw lastError;
-}
+import {waitFor} from '../utils.js';
 
 // Fully-resolved option object matching Zod defaults.
 const defaultOptions = {
@@ -149,7 +128,9 @@ describe('Init command', () => {
 		test('overrides rpcSubscriptionsUrl when explicitly provided', async () => {
 			const customWsUrl = 'wss://custom-rpc.example.com';
 			const {lastFrame} = render(
-				<Init options={{...defaultOptions, rpcSubscriptionsUrl: customWsUrl}} />,
+				<Init
+					options={{...defaultOptions, rpcSubscriptionsUrl: customWsUrl}}
+				/>,
 			);
 
 			await waitFor(() => {
@@ -226,10 +207,9 @@ describe('Init command', () => {
 		test('shows error and skips writeConfig when keypair file does not exist', async () => {
 			const keypair = '/nonexistent/id.json';
 			mockAccess.mockImplementation(async () => {
-				throw Object.assign(
-					new Error('ENOENT: no such file or directory'),
-					{code: 'ENOENT'},
-				);
+				throw Object.assign(new Error('ENOENT: no such file or directory'), {
+					code: 'ENOENT',
+				});
 			});
 
 			const {lastFrame} = render(

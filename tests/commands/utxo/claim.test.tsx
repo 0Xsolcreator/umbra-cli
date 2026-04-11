@@ -14,16 +14,27 @@ type ScanResult = {
 	publicReceived: UtxoData[];
 	nextScanStartIndex: bigint;
 };
-type ClaimResult = {batches: Map<bigint, {status: string; txSignature?: string}>};
-type MockClient = {signer: {address: string}; fetchBatchMerkleProof?: ReturnType<typeof mock>};
+type ClaimResult = {
+	batches: Map<bigint, {status: string; txSignature?: string}>;
+};
+type MockClient = {
+	signer: {address: string};
+	fetchBatchMerkleProof?: ReturnType<typeof mock>;
+};
 
-const mockGetClient = mock(async (): Promise<MockClient> => ({
-	signer: {address: 'TestWalletAddress'},
-	fetchBatchMerkleProof: mock(() => {}),
-}));
+const mockGetClient = mock(
+	async (): Promise<MockClient> => ({
+		signer: {address: 'TestWalletAddress'},
+		fetchBatchMerkleProof: mock(() => {}),
+	}),
+);
 
 const mockScan = mock(
-	async (_tree: unknown, _start: unknown, _end?: unknown): Promise<ScanResult> => ({
+	async (
+		_tree: unknown,
+		_start: unknown,
+		_end?: unknown,
+	): Promise<ScanResult> => ({
 		selfBurnable: [],
 		received: [],
 		publicSelfBurnable: [],
@@ -33,15 +44,21 @@ const mockScan = mock(
 );
 const mockCreateUtxoScanner = mock((_client: unknown) => mockScan);
 
-const mockSelfEncryptedClaimer = mock(async (_utxos: unknown): Promise<ClaimResult> => ({
-	batches: new Map(),
-}));
-const mockSelfPublicClaimer = mock(async (_utxos: unknown): Promise<ClaimResult> => ({
-	batches: new Map(),
-}));
-const mockReceiverEncryptedClaimer = mock(async (_utxos: unknown): Promise<ClaimResult> => ({
-	batches: new Map(),
-}));
+const mockSelfEncryptedClaimer = mock(
+	async (_utxos: unknown): Promise<ClaimResult> => ({
+		batches: new Map(),
+	}),
+);
+const mockSelfPublicClaimer = mock(
+	async (_utxos: unknown): Promise<ClaimResult> => ({
+		batches: new Map(),
+	}),
+);
+const mockReceiverEncryptedClaimer = mock(
+	async (_utxos: unknown): Promise<ClaimResult> => ({
+		batches: new Map(),
+	}),
+);
 
 const mockGetSelfEncryptedClaimerFunction = mock(
 	(_ctx: unknown, _deps: unknown) => mockSelfEncryptedClaimer,
@@ -90,24 +107,7 @@ mock.module('@umbra-privacy/web-zk-prover', () => ({
 }));
 
 import Claim from '../../../source/commands/utxo/claim.js';
-
-// --- Helpers ---
-
-async function waitFor(fn: () => void, timeout = 1000): Promise<void> {
-	const start = Date.now();
-	let lastError: unknown;
-	while (Date.now() - start < timeout) {
-		try {
-			fn();
-			return;
-		} catch (error: unknown) {
-			lastError = error;
-			await Bun.sleep(10);
-		}
-	}
-
-	throw lastError;
-}
+import {waitFor} from '../../utils.js';
 
 const DEFAULT_OPTS = {
 	tree: 0n,
@@ -141,22 +141,30 @@ describe('Claim UTXO command', () => {
 			fetchBatchMerkleProof: mock(() => {}),
 		}));
 		mockCreateUtxoScanner.mockImplementation((_client: unknown) => mockScan);
-		mockScan.mockImplementation(async (): Promise<ScanResult> => ({
-			selfBurnable: [],
-			received: [],
-			publicSelfBurnable: [],
-			publicReceived: [],
-			nextScanStartIndex: 0n,
-		}));
-		mockSelfEncryptedClaimer.mockImplementation(async (): Promise<ClaimResult> => ({
-			batches: new Map(),
-		}));
-		mockSelfPublicClaimer.mockImplementation(async (): Promise<ClaimResult> => ({
-			batches: new Map(),
-		}));
-		mockReceiverEncryptedClaimer.mockImplementation(async (): Promise<ClaimResult> => ({
-			batches: new Map(),
-		}));
+		mockScan.mockImplementation(
+			async (): Promise<ScanResult> => ({
+				selfBurnable: [],
+				received: [],
+				publicSelfBurnable: [],
+				publicReceived: [],
+				nextScanStartIndex: 0n,
+			}),
+		);
+		mockSelfEncryptedClaimer.mockImplementation(
+			async (): Promise<ClaimResult> => ({
+				batches: new Map(),
+			}),
+		);
+		mockSelfPublicClaimer.mockImplementation(
+			async (): Promise<ClaimResult> => ({
+				batches: new Map(),
+			}),
+		);
+		mockReceiverEncryptedClaimer.mockImplementation(
+			async (): Promise<ClaimResult> => ({
+				batches: new Map(),
+			}),
+		);
 		mockGetSelfEncryptedClaimerFunction.mockImplementation(
 			(_ctx: unknown, _deps: unknown) => mockSelfEncryptedClaimer,
 		);
@@ -494,7 +502,9 @@ describe('Claim UTXO command', () => {
 	describe('errors', () => {
 		test('shows error when getClient fails', async () => {
 			mockGetClient.mockImplementation(async () => {
-				throw new Error("Umbra client not initialized. Run 'umbra init' first.");
+				throw new Error(
+					"Umbra client not initialized. Run 'umbra init' first.",
+				);
 			});
 
 			const {lastFrame} = render(<Claim options={DEFAULT_OPTS} />);

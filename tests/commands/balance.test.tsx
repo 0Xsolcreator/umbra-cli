@@ -30,24 +30,7 @@ mock.module('@umbra-privacy/sdk', () => ({
 }));
 
 import Balance from '../../source/commands/balance.js';
-
-// --- Helpers ---
-
-async function waitFor(fn: () => void, timeout = 1000): Promise<void> {
-	const start = Date.now();
-	let lastError: unknown;
-	while (Date.now() - start < timeout) {
-		try {
-			fn();
-			return;
-		} catch (error: unknown) {
-			lastError = error;
-			await Bun.sleep(10);
-		}
-	}
-
-	throw lastError;
-}
+import {waitFor} from '../utils.js';
 
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
@@ -104,8 +87,17 @@ describe('Balance command', () => {
 
 	describe('balance states', () => {
 		test('shows balance for shared state', async () => {
-			mockQuery.mockImplementation(async () =>
-				new Map([[USDC, {state: 'shared', balance: 50_000_000n} as unknown as QueryEncryptedBalanceResult]]),
+			mockQuery.mockImplementation(
+				async () =>
+					new Map([
+						[
+							USDC,
+							{
+								state: 'shared',
+								balance: 50_000_000n,
+							} as unknown as QueryEncryptedBalanceResult,
+						],
+					]),
 			);
 
 			const {lastFrame} = render(<Balance args={[USDC]} />);
@@ -117,8 +109,9 @@ describe('Balance command', () => {
 		});
 
 		test('shows MXE mode message for mxe state', async () => {
-			mockQuery.mockImplementation(async () =>
-				new Map([[USDC, {state: 'mxe'} as QueryEncryptedBalanceResult]]),
+			mockQuery.mockImplementation(
+				async () =>
+					new Map([[USDC, {state: 'mxe'} as QueryEncryptedBalanceResult]]),
 			);
 
 			const {lastFrame} = render(<Balance args={[USDC]} />);
@@ -129,8 +122,11 @@ describe('Balance command', () => {
 		});
 
 		test('shows uninitialized message for uninitialized state', async () => {
-			mockQuery.mockImplementation(async () =>
-				new Map([[USDC, {state: 'uninitialized'} as QueryEncryptedBalanceResult]]),
+			mockQuery.mockImplementation(
+				async () =>
+					new Map([
+						[USDC, {state: 'uninitialized'} as QueryEncryptedBalanceResult],
+					]),
 			);
 
 			const {lastFrame} = render(<Balance args={[USDC]} />);
@@ -141,8 +137,11 @@ describe('Balance command', () => {
 		});
 
 		test('shows deposit prompt for non_existent state', async () => {
-			mockQuery.mockImplementation(async () =>
-				new Map([[USDC, {state: 'non_existent'} as QueryEncryptedBalanceResult]]),
+			mockQuery.mockImplementation(
+				async () =>
+					new Map([
+						[USDC, {state: 'non_existent'} as QueryEncryptedBalanceResult],
+					]),
 			);
 
 			const {lastFrame} = render(<Balance args={[USDC]} />);
@@ -153,11 +152,18 @@ describe('Balance command', () => {
 		});
 
 		test('shows a row per mint for multiple results', async () => {
-			mockQuery.mockImplementation(async () =>
-				new Map([
-					[USDC, {state: 'shared', balance: 1_000_000n} as unknown as QueryEncryptedBalanceResult],
-					[USDT, {state: 'non_existent'} as QueryEncryptedBalanceResult],
-				]),
+			mockQuery.mockImplementation(
+				async () =>
+					new Map([
+						[
+							USDC,
+							{
+								state: 'shared',
+								balance: 1_000_000n,
+							} as unknown as QueryEncryptedBalanceResult,
+						],
+						[USDT, {state: 'non_existent'} as QueryEncryptedBalanceResult],
+					]),
 			);
 
 			const {lastFrame} = render(<Balance args={[USDC, USDT]} />);
@@ -177,7 +183,9 @@ describe('Balance command', () => {
 	describe('errors', () => {
 		test('shows error when getClient fails', async () => {
 			mockGetClient.mockImplementation(async () => {
-				throw new Error("Umbra client not initialized. Run 'umbra init' first.");
+				throw new Error(
+					"Umbra client not initialized. Run 'umbra init' first.",
+				);
 			});
 
 			const {lastFrame} = render(<Balance args={[USDC]} />);

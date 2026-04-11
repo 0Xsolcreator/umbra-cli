@@ -20,7 +20,11 @@ const mockGetClient = mock(async () => ({
 }));
 
 const mockScan = mock(
-	async (_tree: unknown, _start: unknown, _end?: unknown): Promise<ScanResult> => ({
+	async (
+		_tree: unknown,
+		_start: unknown,
+		_end?: unknown,
+	): Promise<ScanResult> => ({
 		selfBurnable: [],
 		received: [],
 		publicSelfBurnable: [],
@@ -45,24 +49,7 @@ mock.module('@umbra-privacy/sdk/errors', () => ({
 }));
 
 import Scan from '../../../source/commands/utxo/scan.js';
-
-// --- Helpers ---
-
-async function waitFor(fn: () => void, timeout = 1000): Promise<void> {
-	const start = Date.now();
-	let lastError: unknown;
-	while (Date.now() - start < timeout) {
-		try {
-			fn();
-			return;
-		} catch (error: unknown) {
-			lastError = error;
-			await Bun.sleep(10);
-		}
-	}
-
-	throw lastError;
-}
+import {waitFor} from '../../utils.js';
 
 const DEFAULT_OPTS = {tree: 0n, start: 0n, end: undefined};
 
@@ -79,13 +66,15 @@ describe('Scan UTXO command', () => {
 			signer: {address: 'TestWalletAddress'},
 		}));
 		mockGetScannerFunction.mockImplementation((_args: unknown) => mockScan);
-		mockScan.mockImplementation(async (): Promise<ScanResult> => ({
-			selfBurnable: [],
-			received: [],
-			publicSelfBurnable: [],
-			publicReceived: [],
-			nextScanStartIndex: 0n,
-		}));
+		mockScan.mockImplementation(
+			async (): Promise<ScanResult> => ({
+				selfBurnable: [],
+				received: [],
+				publicSelfBurnable: [],
+				publicReceived: [],
+				nextScanStartIndex: 0n,
+			}),
+		);
 		mockIsFetchUtxosError.mockImplementation(() => false);
 	});
 
@@ -313,10 +302,9 @@ describe('Scan UTXO command', () => {
 		});
 
 		test('shows initialization error message', async () => {
-			const err = Object.assign(
-				new Error('indexerApiEndpoint is required'),
-				{stage: 'initialization'},
-			);
+			const err = Object.assign(new Error('indexerApiEndpoint is required'), {
+				stage: 'initialization',
+			});
 			mockIsFetchUtxosError.mockImplementation(() => true);
 			mockScan.mockImplementation(async () => {
 				throw err;

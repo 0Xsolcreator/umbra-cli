@@ -9,14 +9,18 @@ import type {QueryUserAccountResult} from '@umbra-privacy/sdk';
 // Bun registers these before resolving static imports in this file,
 // so the component picks up the mocked versions when it loads.
 
-const mockGetClient = mock(async () => ({signer: {address: 'TestWalletAddress'}}));
+const mockGetClient = mock(async () => ({
+	signer: {address: 'TestWalletAddress'},
+}));
 
 const mockQueryUserAccount = mock(
 	async (_address: unknown): Promise<QueryUserAccountResult> => ({
 		state: 'non_existent',
 	}),
 );
-const mockGetUserAccountQuerier = mock((_args: unknown) => mockQueryUserAccount);
+const mockGetUserAccountQuerier = mock(
+	(_args: unknown) => mockQueryUserAccount,
+);
 
 const mockRegisterUser = mock(async (_opts: unknown) => [] as string[]);
 const mockGetUserRegistration = mock((_args: unknown) => mockRegisterUser);
@@ -37,24 +41,7 @@ mock.module('@umbra-privacy/sdk/errors', () => ({
 }));
 
 import Register from '../../source/commands/register.js';
-
-// --- Helpers ---
-
-async function waitFor(fn: () => void, timeout = 1000): Promise<void> {
-	const start = Date.now();
-	let lastError: unknown;
-	while (Date.now() - start < timeout) {
-		try {
-			fn();
-			return;
-		} catch (error: unknown) {
-			lastError = error;
-			await Bun.sleep(10);
-		}
-	}
-
-	throw lastError;
-}
+import {waitFor} from '../utils.js';
 
 // --- Tests ---
 
@@ -92,7 +79,9 @@ describe('Register command', () => {
 		test('shows checking status while async work is pending', () => {
 			mockGetClient.mockImplementation(() => new Promise(() => {}));
 
-			const {lastFrame, unmount} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame, unmount} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			expect(lastFrame()).toContain('Checking registration status...');
 			unmount();
@@ -105,16 +94,21 @@ describe('Register command', () => {
 
 	describe('already registered', () => {
 		test('shows already registered when X25519 key and commitment are registered', async () => {
-			mockQueryUserAccount.mockImplementation(async () => ({
-				state: 'exists',
-				data: {
-					isUserAccountX25519KeyRegistered: true,
-					isUserCommitmentRegistered: true,
-					isActiveForAnonymousUsage: true,
-				},
-			} as unknown as QueryUserAccountResult));
+			mockQueryUserAccount.mockImplementation(
+				async () =>
+					({
+						state: 'exists',
+						data: {
+							isUserAccountX25519KeyRegistered: true,
+							isUserCommitmentRegistered: true,
+							isActiveForAnonymousUsage: true,
+						},
+					} as unknown as QueryUserAccountResult),
+			);
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('User already registered');
@@ -124,16 +118,21 @@ describe('Register command', () => {
 		});
 
 		test('does not skip registration when X25519 key is missing', async () => {
-			mockQueryUserAccount.mockImplementation(async () => ({
-				state: 'exists',
-				data: {
-					isUserAccountX25519KeyRegistered: false,
-					isUserCommitmentRegistered: true,
-					isActiveForAnonymousUsage: false,
-				},
-			} as unknown as QueryUserAccountResult));
+			mockQueryUserAccount.mockImplementation(
+				async () =>
+					({
+						state: 'exists',
+						data: {
+							isUserAccountX25519KeyRegistered: false,
+							isUserCommitmentRegistered: true,
+							isActiveForAnonymousUsage: false,
+						},
+					} as unknown as QueryUserAccountResult),
+			);
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration complete');
@@ -143,16 +142,21 @@ describe('Register command', () => {
 		});
 
 		test('does not skip registration when commitment is missing', async () => {
-			mockQueryUserAccount.mockImplementation(async () => ({
-				state: 'exists',
-				data: {
-					isUserAccountX25519KeyRegistered: true,
-					isUserCommitmentRegistered: false,
-					isActiveForAnonymousUsage: false,
-				},
-			} as unknown as QueryUserAccountResult));
+			mockQueryUserAccount.mockImplementation(
+				async () =>
+					({
+						state: 'exists',
+						data: {
+							isUserAccountX25519KeyRegistered: true,
+							isUserCommitmentRegistered: false,
+							isActiveForAnonymousUsage: false,
+						},
+					} as unknown as QueryUserAccountResult),
+			);
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration complete');
@@ -182,7 +186,9 @@ describe('Register command', () => {
 		});
 
 		test('defaults confidential and anonymous to true', async () => {
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration complete');
@@ -194,13 +200,11 @@ describe('Register command', () => {
 		});
 
 		test('shows transaction count on success', async () => {
-			mockRegisterUser.mockImplementation(async () => [
-				'sig1',
-				'sig2',
-				'sig3',
-			]);
+			mockRegisterUser.mockImplementation(async () => ['sig1', 'sig2', 'sig3']);
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('3 transactions submitted');
@@ -210,7 +214,9 @@ describe('Register command', () => {
 		test('shows singular "transaction" when 1 transaction submitted', async () => {
 			mockRegisterUser.mockImplementation(async () => ['sig1']);
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('1 transaction submitted');
@@ -228,7 +234,9 @@ describe('Register command', () => {
 				throw new Error('Umbra client not initialized. Run umbra init first.');
 			});
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration failed');
@@ -247,7 +255,9 @@ describe('Register command', () => {
 				throw err;
 			});
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration failed');
@@ -264,7 +274,9 @@ describe('Register command', () => {
 				throw err;
 			});
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration failed');
@@ -281,7 +293,9 @@ describe('Register command', () => {
 				throw err;
 			});
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration failed');
@@ -300,7 +314,9 @@ describe('Register command', () => {
 				throw err;
 			});
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration failed');
@@ -319,11 +335,15 @@ describe('Register command', () => {
 				throw err;
 			});
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration failed');
-				expect(lastFrame()).toContain('Transaction confirmation timed out after 30000ms');
+				expect(lastFrame()).toContain(
+					'Transaction confirmation timed out after 30000ms',
+				);
 				expect(lastFrame()).toContain('check on-chain state before retrying');
 			});
 		});
@@ -337,7 +357,9 @@ describe('Register command', () => {
 				throw err;
 			});
 
-			const {lastFrame} = render(<Register options={{confidential: true, anonymous: true}} />);
+			const {lastFrame} = render(
+				<Register options={{confidential: true, anonymous: true}} />,
+			);
 
 			await waitFor(() => {
 				expect(lastFrame()).toContain('Registration failed');

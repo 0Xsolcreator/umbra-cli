@@ -1,4 +1,7 @@
-import {getClaimableUtxoScannerFunction, getUmbraClient} from '@umbra-privacy/sdk';
+import {
+	getClaimableUtxoScannerFunction,
+	getUmbraClient,
+} from '@umbra-privacy/sdk';
 
 type UmbraClient = Awaited<ReturnType<typeof getUmbraClient>>;
 

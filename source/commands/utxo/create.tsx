@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
-import Spinner from 'ink-spinner';
 import zod from 'zod';
 import {
 	getEncryptedBalanceToSelfClaimableUtxoCreatorFunction,
@@ -8,7 +7,6 @@ import {
 	getPublicBalanceToSelfClaimableUtxoCreatorFunction,
 	getPublicBalanceToReceiverClaimableUtxoCreatorFunction,
 } from '@umbra-privacy/sdk';
-import {isCreateUtxoError} from '@umbra-privacy/sdk/errors';
 import {
 	getCreateSelfClaimableUtxoFromEncryptedBalanceProver,
 	getCreateReceiverClaimableUtxoFromEncryptedBalanceProver,
@@ -19,6 +17,9 @@ import {address} from '@solana/kit';
 import {type U64} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
+import {Spinner, ErrorMessage} from '../../components/index.js';
+import {formatCreateUtxoError} from '../../lib/errors.js';
+import {type ErrorState} from '../../lib/errors.js';
 
 export const args = zod.tuple([
 	zod.string().describe('mint'),
@@ -52,7 +53,7 @@ type State =
 			queueSignature?: string;
 			callbackSignature?: string;
 	  }
-	| {status: 'error'; message: string};
+	| ErrorState;
 
 export default function Create({args: [mint, amount], options: opts}: Props) {
 	const [state, setState] = useState<State>({
@@ -74,55 +75,51 @@ export default function Create({args: [mint, amount], options: opts}: Props) {
 					stepLabel: 'Generating ZK proof and submitting...',
 				});
 
-				if (isEncrypted && isSelf) {
-					const zkProver =
-						getCreateSelfClaimableUtxoFromEncryptedBalanceProver();
-					const createUtxo =
-						getEncryptedBalanceToSelfClaimableUtxoCreatorFunction(
-							{client},
-							{zkProver},
-						);
-					const result = await createUtxo({
-						destinationAddress: address(destination),
-						mint: address(mint),
-						amount: amount as U64,
-					});
-					setState({
-						status: 'success',
-						createProofAccountSignature: result.createProofAccountSignature,
-						queueSignature: result.queueSignature,
-						callbackSignature: result.callbackSignature,
-					});
-				} else if (isEncrypted && !isSelf) {
-					const zkProver =
-						getCreateReceiverClaimableUtxoFromEncryptedBalanceProver();
-					const createUtxo =
-						getEncryptedBalanceToReceiverClaimableUtxoCreatorFunction(
-							{client},
-							{zkProver},
-						);
-					const result = await createUtxo({
-						destinationAddress: address(destination),
-						mint: address(mint),
-						amount: amount as U64,
-					});
-					setState({
-						status: 'success',
-						createProofAccountSignature: result.createProofAccountSignature,
-						queueSignature: result.queueSignature,
-						callbackSignature: result.callbackSignature,
-					});
-				} else if (!isEncrypted && isSelf) {
+				const createArgs = {
+					destinationAddress: address(destination),
+					mint: address(mint),
+					amount: amount as U64,
+				};
+
+				if (isEncrypted) {
+					if (isSelf) {
+						const zkProver =
+							getCreateSelfClaimableUtxoFromEncryptedBalanceProver();
+						const createUtxo =
+							getEncryptedBalanceToSelfClaimableUtxoCreatorFunction(
+								{client},
+								{zkProver},
+							);
+						const result = await createUtxo(createArgs);
+						setState({
+							status: 'success',
+							createProofAccountSignature: result.createProofAccountSignature,
+							queueSignature: result.queueSignature,
+							callbackSignature: result.callbackSignature,
+						});
+					} else {
+						const zkProver =
+							getCreateReceiverClaimableUtxoFromEncryptedBalanceProver();
+						const createUtxo =
+							getEncryptedBalanceToReceiverClaimableUtxoCreatorFunction(
+								{client},
+								{zkProver},
+							);
+						const result = await createUtxo(createArgs);
+						setState({
+							status: 'success',
+							createProofAccountSignature: result.createProofAccountSignature,
+							queueSignature: result.queueSignature,
+							callbackSignature: result.callbackSignature,
+						});
+					}
+				} else if (isSelf) {
 					const zkProver = getCreateSelfClaimableUtxoFromPublicBalanceProver();
 					const createUtxo = getPublicBalanceToSelfClaimableUtxoCreatorFunction(
 						{client},
 						{zkProver},
 					);
-					const result = await createUtxo({
-						destinationAddress: address(destination),
-						mint: address(mint),
-						amount: amount as U64,
-					});
+					const result = await createUtxo(createArgs);
 					setState({
 						status: 'success',
 						createProofAccountSignature: result.createProofAccountSignature,
@@ -136,11 +133,7 @@ export default function Create({args: [mint, amount], options: opts}: Props) {
 							{client},
 							{zkProver},
 						);
-					const result = await createUtxo({
-						destinationAddress: address(destination),
-						mint: address(mint),
-						amount: amount as U64,
-					});
+					const result = await createUtxo(createArgs);
 					setState({
 						status: 'success',
 						createProofAccountSignature: result.createProofAccountSignature,
@@ -148,81 +141,16 @@ export default function Create({args: [mint, amount], options: opts}: Props) {
 					});
 				}
 			} catch (err: unknown) {
-				let message: string;
-
-				if (isCreateUtxoError(err)) {
-					switch (err.stage) {
-						case 'validation': {
-							message = `Invalid arguments: ${err.message}`;
-							break;
-						}
-
-						case 'account-fetch': {
-							message = `Could not fetch recipient account — check RPC and recipient address: ${err.message}`;
-							break;
-						}
-
-						case 'mint-fetch': {
-							message = `Could not fetch mint account — check RPC and mint address: ${err.message}`;
-							break;
-						}
-
-						case 'zk-proof-generation': {
-							message = `ZK proof generation failed — try again: ${err.message}`;
-							break;
-						}
-
-						case 'transaction-sign': {
-							message = 'Transaction signing cancelled.';
-							break;
-						}
-
-						case 'transaction-validate': {
-							message = `Pre-flight simulation failed — check funds and account state: ${err.message}`;
-							break;
-						}
-
-						case 'transaction-send': {
-							message = `${err.message} — check on-chain state before retrying.`;
-							break;
-						}
-
-						default: {
-							message = `UTXO creation failed at stage "${err.stage}": ${err.message}`;
-						}
-					}
-				} else {
-					message = err instanceof Error ? err.message : String(err);
-				}
-
-				setState({status: 'error', message});
+				setState({status: 'error', message: formatCreateUtxoError(err)});
 			}
 		}
 
 		void run();
 	}, []);
 
-	if (state.status === 'creating') {
-		return (
-			<Box>
-				<Text color="cyan">
-					<Spinner type="dots" />
-				</Text>
-				<Text> {state.stepLabel}</Text>
-			</Box>
-		);
-	}
-
-	if (state.status === 'error') {
-		return (
-			<Box flexDirection="column">
-				<Text color="red">✗ UTXO creation failed</Text>
-				<Box marginTop={1} marginLeft={2}>
-					<Text dimColor>{state.message}</Text>
-				</Box>
-			</Box>
-		);
-	}
+	if (state.status === 'creating') return <Spinner label={state.stepLabel} />;
+	if (state.status === 'error')
+		return <ErrorMessage title="UTXO creation failed" detail={state.message} />;
 
 	return (
 		<Box flexDirection="column">

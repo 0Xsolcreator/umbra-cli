@@ -1,15 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
-import Spinner from 'ink-spinner';
 import zod from 'zod';
 import {
 	getUserAccountQuerierFunction,
 	getUserRegistrationFunction,
 } from '@umbra-privacy/sdk';
-import {isRegistrationError} from '@umbra-privacy/sdk/errors';
 import {getUserRegistrationProver} from '@umbra-privacy/web-zk-prover';
 
 import {getClient} from '../lib/umbra/client.js';
+import {Spinner, ErrorMessage} from '../components/index.js';
+import {formatRegistrationError} from '../lib/errors.js';
+import {type ErrorState} from '../lib/errors.js';
 
 export const options = zod.object({
 	confidential: zod
@@ -31,7 +32,7 @@ type State =
 	| {status: 'registering'; stepLabel: string}
 	| {status: 'already-registered'}
 	| {status: 'success'; signatureCount: number}
-	| {status: 'error'; message: string};
+	| ErrorState;
 
 export default function Register({options: opts}: Props) {
 	const [state, setState] = useState<State>({status: 'checking'});
@@ -94,44 +95,7 @@ export default function Register({options: opts}: Props) {
 
 				setState({status: 'success', signatureCount: signatures.length});
 			} catch (err: unknown) {
-				let message: string;
-
-				if (isRegistrationError(err)) {
-					switch (err.stage) {
-						case 'master-seed-derivation': {
-							message = 'Sign the master seed message to proceed.';
-							break;
-						}
-
-						case 'transaction-sign': {
-							message = 'Transaction signing cancelled.';
-							break;
-						}
-
-						case 'zk-proof-generation': {
-							message = `ZK proof generation failed: ${err.message}`;
-							break;
-						}
-
-						case 'account-fetch': {
-							message = `RPC error while checking account state: ${err.message}`;
-							break;
-						}
-
-						case 'transaction-send': {
-							message = `${err.message} — check on-chain state before retrying.`;
-							break;
-						}
-
-						default: {
-							message = `Registration failed at stage "${err.stage}": ${err.message}`;
-						}
-					}
-				} else {
-					message = err instanceof Error ? err.message : String(err);
-				}
-
-				setState({status: 'error', message});
+				setState({status: 'error', message: formatRegistrationError(err)});
 			}
 		}
 
@@ -143,27 +107,11 @@ export default function Register({options: opts}: Props) {
 			state.status === 'checking'
 				? 'Checking registration status...'
 				: state.stepLabel;
-
-		return (
-			<Box>
-				<Text color="cyan">
-					<Spinner type="dots" />
-				</Text>
-				<Text> {label}</Text>
-			</Box>
-		);
+		return <Spinner label={label} />;
 	}
 
-	if (state.status === 'error') {
-		return (
-			<Box flexDirection="column">
-				<Text color="red">✗ Registration failed</Text>
-				<Box marginTop={1} marginLeft={2}>
-					<Text dimColor>{state.message}</Text>
-				</Box>
-			</Box>
-		);
-	}
+	if (state.status === 'error')
+		return <ErrorMessage title="Registration failed" detail={state.message} />;
 
 	if (state.status === 'already-registered') {
 		return <Text color="green">✓ User already registered</Text>;
