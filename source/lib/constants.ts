@@ -13,4 +13,5 @@ export const NETWORK_DEFAULTS = {
 	},
 } as const;
 
-export const DEFAULT_INDEXER_ENDPOINT = 'https://indexer.api.umbraprivacy.com';
+export const DEFAULT_INDEXER_ENDPOINT =
+	'https://utxo-indexer.api-devnet.umbraprivacy.com';
