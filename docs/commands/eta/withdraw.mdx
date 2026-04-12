@@ -1,0 +1,55 @@
+---
+title: eta withdraw
+description: Move tokens from your encrypted balance back to a public wallet.
+---
+
+```bash
+umbra eta withdraw <mint> <amount> [options]
+```
+
+Transfers tokens from your encrypted balance to a public Associated Token Account (ATA). This is the reverse of `eta deposit`. The Arcium MPC network verifies the withdrawal authorization — the CLI waits for both the handler and the callback transactions to confirm before returning.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<mint>` | The SPL or Token-2022 mint address |
+| `<amount>` | Amount to withdraw in native token units |
+
+<Note>
+Amounts are in base units. For a token with 6 decimals, `1000000` equals 1 token.
+</Note>
+
+## Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--destination <address>` | Your own address | Public wallet address to receive the withdrawn tokens |
+
+## Examples
+
+```bash
+# Withdraw 50 USDC back to your own wallet
+umbra eta withdraw EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000
+
+# Withdraw to a different address
+umbra eta withdraw EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000 \
+  --destination 9xQe...fK2p
+```
+
+## Output
+
+```
+✓ Withdrawal complete
+  Queue:    3mNr...hJ8k
+  Callback: 7pQs...aW4x
+```
+
+`Queue` is the handler transaction. `Callback` is the on-chain transaction that finalizes the transfer to your public ATA after MPC processing.
+
+## Prerequisites
+
+- `umbra init` and `umbra register` must have been run.
+- An encrypted balance must exist for the specified mint.
+- The destination ATA must already exist. Create it with standard Solana token tooling if needed.
+- The withdrawal amount must not exceed your current encrypted balance.

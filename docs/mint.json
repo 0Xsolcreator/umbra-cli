@@ -1,0 +1,39 @@
+{
+	"$schema": "https://mintlify.com/schema.json",
+	"name": "Umbra CLI",
+	"favicon": "/favicon.svg",
+	"colors": {
+		"primary": "#06b6d4",
+		"light": "#22d3ee",
+		"dark": "#0891b2"
+	},
+	"navigation": [
+		{
+			"group": "Get Started",
+			"pages": ["introduction", "quickstart"]
+		},
+		{
+			"group": "Commands",
+			"pages": [
+				"commands/init",
+				"commands/register",
+				{
+					"group": "eta",
+					"pages": [
+						"commands/eta/deposit",
+						"commands/eta/balance",
+						"commands/eta/withdraw"
+					]
+				},
+				{
+					"group": "utxo",
+					"pages": [
+						"commands/utxo/scan",
+						"commands/utxo/create",
+						"commands/utxo/claim"
+					]
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,77 @@
+---
+title: Quickstart
+description: Get from zero to your first private transfer in minutes.
+---
+
+## Install
+
+```bash
+npm install --global umbra-cli
+```
+
+## Step 1 — Initialize
+
+Link your Solana keypair and choose a network. This saves a config file at `~/.umbra-cli/config.json`.
+
+```bash
+umbra init
+```
+
+The CLI defaults to your Solana keypair at `~/.config/solana/id.json` and connects to `devnet`. Pass flags to override:
+
+```bash
+umbra init --network mainnet --keypair ~/my-wallet.json
+```
+
+## Step 2 — Register
+
+Create your on-chain Umbra account. This publishes your encryption key and user commitment to the Solana network, enabling both encrypted balances and the mixer.
+
+```bash
+umbra register
+```
+
+Registration is a one-time step per wallet. It performs up to three on-chain transactions and skips any that are already complete — so it's safe to run again if interrupted.
+
+<Note>
+Your wallet will prompt you to sign a message during registration. This signature derives your master seed — the root of Umbra's key hierarchy. It is not a transaction and costs no SOL.
+</Note>
+
+## Step 3 — Deposit
+
+Move tokens from your public wallet into an encrypted balance. Amounts are in native token units (accounting for decimals).
+
+```bash
+# Deposit 100 USDC (6 decimals → 100_000_000 base units)
+umbra eta deposit EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100000000
+```
+
+The command waits for the Arcium MPC callback to confirm before returning. You'll see two transaction signatures: the queue tx and the callback tx.
+
+## Step 4 — Check your balance
+
+```bash
+umbra eta balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+Pass multiple mints to check several at once:
+
+```bash
+umbra eta balance <mint1> <mint2> <mint3>
+```
+
+## Step 5 — Withdraw
+
+Move tokens back to your public wallet:
+
+```bash
+umbra eta withdraw EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000
+```
+
+---
+
+## Next steps
+
+- Use `--recipient` on `eta deposit` to shield tokens directly into another user's encrypted balance.
+- Use `utxo create` and `utxo claim` for anonymous mixer transfers.
+- Run any command with `--help` for the full option list.

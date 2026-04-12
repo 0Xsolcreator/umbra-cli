@@ -1,0 +1,40 @@
+---
+title: register
+description: Publish your on-chain Umbra user account.
+---
+
+```bash
+umbra register [options]
+```
+
+Creates your on-chain Umbra identity. Registration is required before depositing, withdrawing, or using the mixer. It performs up to three on-chain transactions in order:
+
+1. **Account initialization** — creates your `EncryptedUserAccount` PDA on-chain.
+2. **X25519 key registration** — stores your encryption public key, enabling encrypted balance (Shared mode) and deposits from others.
+3. **User commitment registration** — registers your Poseidon commitment via a ZK proof, enabling the mixer and anonymous transfers.
+
+Registration is idempotent. Each run checks which steps are already complete on-chain and skips them. If a previous run was interrupted, re-running will pick up where it left off.
+
+## Options
+
+| Flag             | Default | Description                                           |
+| ---------------- | ------- | ----------------------------------------------------- |
+| `--confidential` | `true`  | Register the X25519 key for encrypted balance support |
+| `--anonymous`    | `true`  | Register the user commitment for mixer support        |
+
+## Examples
+
+```bash
+# Full registration (recommended)
+umbra register
+
+# Register only for encrypted balances, skip mixer
+umbra register --no-anonymous
+
+# Register only for the mixer, skip encrypted balance
+umbra register --no-confidential
+```
+
+## Checking registration status
+
+To see whether an account is already registered without submitting any transactions, run `umbra register` — it will report "already registered" and exit cleanly if all steps are complete.

@@ -1,0 +1,60 @@
+---
+title: eta deposit
+description: Move tokens from your public wallet into an encrypted balance.
+---
+
+```bash
+umbra eta deposit <mint> <amount> [options]
+```
+
+Transfers tokens from your public Associated Token Account (ATA) into an on-chain encrypted balance. After a successful deposit, the balance is hidden — it can only be decrypted by the owner's key.
+
+The deposit follows the dual-instruction pattern: the CLI submits a handler transaction, waits for the Arcium MPC network to process it, then waits for the callback transaction to confirm. Both signatures are printed on success.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<mint>` | The SPL or Token-2022 mint address |
+| `<amount>` | Amount in native token units (e.g. `100000000` for 100 USDC) |
+
+<Note>
+Amounts are in base units, not display units. For a token with 6 decimals, `1000000` equals 1 token. For SOL (9 decimals), `1000000000` equals 1 SOL.
+</Note>
+
+## Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--recipient <address>` | Your own address | Wallet address to credit. Deposits to any registered Umbra user. |
+
+## Examples
+
+```bash
+# Deposit 100 USDC into your own encrypted balance
+umbra eta deposit EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100000000
+
+# Deposit 50 USDC into another user's encrypted balance
+umbra eta deposit EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000 \
+  --recipient GsbwXfJraMomNxBcpR3DBFyKCCmN9SKGzKFJBNKxRFkT
+```
+
+## Output
+
+```
+✓ Deposit complete
+  Queue:    5KtP...vXm2
+  Callback: 8aLr...nQ9w
+```
+
+`Queue` is the handler transaction that queues the MPC computation. `Callback` is the on-chain transaction that finalizes the deposit after MPC processing.
+
+<Warning>
+The depositor's wallet address, the recipient address, and the gross transfer amount are all visible on-chain. Only the resulting encrypted balance is hidden. Deposits are not anonymous by themselves — use the mixer (`utxo create`) for unlinkable transfers.
+</Warning>
+
+## Prerequisites
+
+- `umbra init` must have been run.
+- Both the sender and the recipient must have run `umbra register`.
+- The sender must have sufficient token balance in their public ATA.

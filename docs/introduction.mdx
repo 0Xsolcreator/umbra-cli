@@ -1,0 +1,51 @@
+---
+title: Introduction
+description: Privacy-preserving token transfers on Solana, from your terminal.
+---
+
+<Info>
+This is a community-built CLI and is not an official product of the Umbra team. It is maintained independently as a contribution to the ecosystem.
+</Info>
+
+Umbra CLI is a command-line tool for interacting with the Umbra protocol on Solana. It lets you shield tokens into encrypted balances, transfer them anonymously through the mixer, and manage everything from a single terminal command.
+
+## Two ways to use Umbra
+
+**Encrypted Token Accounts (ETA)**
+
+Shield tokens from your public wallet into an on-chain encrypted balance. The balance is hidden — only you can decrypt it. Deposit, check your balance, and withdraw back to your public wallet at any time.
+
+```
+umbra eta deposit <mint> <amount>
+umbra eta balance <mint>
+umbra eta withdraw <mint> <amount>
+```
+
+**Stealth UTXOs (Mixer)**
+
+Create stealth UTXOs in the mixer pool — anonymous token commitments that are unlinkable to their origin. Send UTXOs to other users or create them for yourself, then claim them back into your encrypted or public balance.
+
+```
+umbra utxo create <mint> <amount>
+umbra utxo scan
+umbra utxo claim
+```
+
+## Command overview
+
+| Command | Description |
+|---|---|
+| `umbra init` | Link your keypair and configure the CLI |
+| `umbra register` | Publish your on-chain user account |
+| `umbra eta deposit` | Move tokens from your public wallet into an encrypted balance |
+| `umbra eta balance` | Check your encrypted token balances |
+| `umbra eta withdraw` | Move tokens from your encrypted balance back to a public wallet |
+| `umbra utxo scan` | Scan the chain for unspent stealth UTXOs |
+| `umbra utxo claim` | Claim found UTXOs to your wallet |
+| `umbra utxo create` | Create a new stealth UTXO |
+
+## Before you start
+
+You need a Solana keypair file on disk. The CLI defaults to `~/.config/solana/id.json` — the standard location used by the Solana CLI. Run `solana-keygen new` if you don't have one yet.
+
+All commands require the CLI to be initialized first. Run `umbra init` once to link your keypair and set your network. Then run `umbra register` to create your on-chain Umbra account.

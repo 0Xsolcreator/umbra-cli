@@ -1,0 +1,85 @@
+---
+title: utxo create
+description: Create a new stealth UTXO in the mixer pool.
+---
+
+```bash
+umbra utxo create <mint> <amount> [options]
+```
+
+Creates a stealth UTXO in the Umbra mixer. UTXOs are anonymous token commitments — they can be claimed later by you or by a recipient you specify.
+
+Tokens can be sourced from your public ATA (`--from public`, the default) or from your encrypted balance (`--from encrypted`). The created UTXO can be self-claimable (you can claim it yourself) or receiver-claimable (only the specified recipient can claim it).
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<mint>` | The SPL or Token-2022 mint address |
+| `<amount>` | Amount in native token units |
+
+<Note>
+Amounts are in base units. For a token with 6 decimals, `1000000` equals 1 token.
+</Note>
+
+## Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--from <source>` | `public` | Token source: `public` (your ATA) or `encrypted` (your encrypted balance) |
+| `--receiver <address>` | Your own address | Recipient wallet address. Omit to create a self-claimable UTXO. |
+
+## Modes
+
+| `--from` | `--receiver` | Result |
+|---|---|---|
+| `public` | *(omitted)* | Self-claimable UTXO funded from your public ATA |
+| `public` | `<address>` | Receiver-claimable UTXO funded from your public ATA |
+| `encrypted` | *(omitted)* | Self-claimable UTXO funded from your encrypted balance |
+| `encrypted` | `<address>` | Receiver-claimable UTXO funded from your encrypted balance |
+
+## Examples
+
+```bash
+# Self-claimable UTXO from your public ATA
+umbra utxo create EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 1000000
+
+# Send a UTXO to another user (they claim it, you pay from your ATA)
+umbra utxo create EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 1000000 \
+  --receiver GsbwXfJraMomNxBcpR3DBFyKCCmN9SKGzKFJBNKxRFkT
+
+# Self-claimable UTXO from your encrypted balance
+umbra utxo create EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 1000000 \
+  --from encrypted
+
+# Send from your encrypted balance to another user
+umbra utxo create EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 1000000 \
+  --from encrypted \
+  --receiver GsbwXfJraMomNxBcpR3DBFyKCCmN9SKGzKFJBNKxRFkT
+```
+
+## Output
+
+**From public ATA:**
+```
+✓ UTXO created
+  Proof account: 4hKr...mP3n
+  Create:        7xWq...aB9c
+```
+
+**From encrypted balance:**
+```
+✓ UTXO created
+  Proof account: 4hKr...mP3n
+  Queue:         2nFp...jK7m
+  Callback:      9aLr...tQ4w
+```
+
+When sourcing from an encrypted balance, the dual-instruction MPC pattern applies: a queue transaction is submitted first, then the Arcium network processes it and fires a callback. Both signatures are shown.
+
+## Prerequisites
+
+- `umbra init` must have been run.
+- `umbra register` must have been run.
+- For `--from encrypted`: you must have an encrypted balance for the specified mint.
+- The recipient (your own or `--receiver`) must be a registered Umbra user.

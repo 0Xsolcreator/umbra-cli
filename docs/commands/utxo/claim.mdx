@@ -1,0 +1,68 @@
+---
+title: utxo claim
+description: Scan for and claim all unspent stealth UTXOs belonging to you.
+---
+
+```bash
+umbra utxo claim [options]
+```
+
+<Warning>
+**Claim is currently unavailable.** There is a known issue with signature verification that causes claim transactions to fail. This will be fixed in an upcoming release.
+</Warning>
+
+Scans for claimable UTXOs and claims them in a single step. Internally it runs the same scan as `utxo scan`, then generates ZK proofs and submits claim transactions for every UTXO it finds.
+
+Claimed UTXOs are deposited into your encrypted balance by default. Pass `--to public` to claim self-claimable UTXOs to your public ATA instead.
+
+<Note>
+Received UTXOs (sent by another user) always go to your encrypted balance, regardless of `--to`.
+</Note>
+
+## Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--tree <n>` | `0` | First Merkle tree index to scan |
+| `--end-tree <n>` | Same as `--tree` | Last Merkle tree index to scan (inclusive) |
+| `--all-trees` | `false` | Scan all trees starting from `--tree` until no more are found |
+| `--start <n>` | `0` | Start insertion index (inclusive) |
+| `--end <n>` | End of tree | End insertion index (inclusive) |
+| `--page-size <n>` | Entire range | Insertion indices per indexer request |
+| `--to <destination>` | `encrypted` | Claim destination for self-claimable UTXOs: `encrypted` or `public` |
+| `--relayer <url>` | Umbra devnet relayer | Relayer API endpoint used to submit claim transactions |
+
+## Examples
+
+```bash
+# Scan tree 0 and claim everything found into your encrypted balance
+umbra utxo claim
+
+# Claim to your public wallet instead
+umbra utxo claim --to public
+
+# Scan all trees and claim
+umbra utxo claim --all-trees
+
+# Continue from a known position
+umbra utxo claim --tree 2 --start 1500
+
+# Mainnet with a custom relayer
+umbra utxo claim --relayer https://relayer.api.umbraprivacy.com
+```
+
+## Output
+
+```
+✓ Claimed 3 UTXOs
+  Batch 0: finalized — 5KtP...vXm2
+  Batch 1: finalized — 9aQr...nM4k
+```
+
+Each batch corresponds to a group of UTXOs processed together. The transaction signature and final status are shown per batch.
+
+## Prerequisites
+
+- `umbra init` with `--indexer-endpoint` configured.
+- `umbra register` must have been run (both `--confidential` and `--anonymous` for full support).
+- For `--to public`: the destination ATA must already exist for each claimed mint.

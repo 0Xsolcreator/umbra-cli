@@ -1,0 +1,65 @@
+---
+title: init
+description: Link your keypair and configure the Umbra CLI.
+---
+
+```bash
+umbra init [options]
+```
+
+Writes a config file to `~/.umbra-cli/config.json`. Run this once before using any other command. Re-running it overwrites the existing config.
+
+## Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--keypair <path>` | `~/.config/solana/id.json` | Path to your Solana keypair JSON file |
+| `--network <name>` | `devnet` | Network to connect to: `mainnet`, `devnet`, or `localnet` |
+| `--rpc-url <url>` | Network default | HTTP RPC endpoint |
+| `--rpc-subscriptions-url <url>` | Network default | WebSocket RPC endpoint |
+| `--indexer-endpoint <url>` | Umbra devnet indexer | Umbra indexer API base URL (required for UTXO commands) |
+| `--defer-master-seed` | `false` | Delay the master seed signing prompt until the first operation that needs it |
+
+## Network defaults
+
+| Network | RPC | WebSocket |
+|---|---|---|
+| `mainnet` | `https://api.mainnet-beta.solana.com` | `wss://api.mainnet-beta.solana.com` |
+| `devnet` | `https://api.devnet.solana.com` | `wss://api.devnet.solana.com` |
+| `localnet` | `http://127.0.0.1:8899` | `ws://127.0.0.1:8900` |
+
+## Examples
+
+```bash
+# Use defaults (devnet, standard keypair location)
+umbra init
+
+# Mainnet with a custom keypair
+umbra init --network mainnet --keypair ~/wallets/my-wallet.json
+
+# Custom RPC and indexer
+umbra init \
+  --network mainnet \
+  --rpc-url https://rpc.helius.xyz/?api-key=YOUR_KEY \
+  --rpc-subscriptions-url wss://rpc.helius.xyz/?api-key=YOUR_KEY \
+  --indexer-endpoint https://indexer.api.umbraprivacy.com
+```
+
+## Config file
+
+The config is saved at `~/.umbra-cli/config.json`:
+
+```json
+{
+  "network": "mainnet",
+  "rpcUrl": "https://rpc.helius.xyz/?api-key=YOUR_KEY",
+  "rpcSubscriptionsUrl": "wss://rpc.helius.xyz/?api-key=YOUR_KEY",
+  "walletPath": "/home/user/wallets/my-wallet.json",
+  "indexerApiEndpoint": "https://indexer.api.umbraprivacy.com",
+  "deferMasterSeedSignature": false
+}
+```
+
+<Note>
+The `--indexer-endpoint` is required for UTXO commands (`utxo scan`, `utxo claim`). For encrypted balance commands only (`eta deposit`, `eta balance`, `eta withdraw`) it can be omitted.
+</Note>
