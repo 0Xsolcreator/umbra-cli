@@ -1,27 +1,12 @@
-import React, {useEffect, useState} from 'react';
-import {Box, Text} from 'ink';
+import React, {useEffect} from 'react';
+import {Box, Text, useApp} from 'ink';
 import {COMMANDS} from '../lib/commands.js';
 
 const C = 'white' as const; // cloud outline
 const E = 'cyan' as const; // eye pills
 
-type EyeCap = '▄' | '█' | '▀' | ' ';
-type EyeState = readonly [EyeCap, EyeCap, EyeCap, EyeCap, EyeCap];
-
-const OPEN: EyeState = ['▄', '█', '█', '█', '▀'];
-
-// Blink: eyes squeeze inward symmetrically from top + bottom, then reopen
-const BLINK_SEQ: ReadonlyArray<readonly [EyeState, number]> = [
-	[[' ', '▄', '█', '▀', ' '], 70],
-	[[' ', ' ', '█', ' ', ' '], 60],
-	[[' ', ' ', ' ', ' ', ' '], 100],
-	[[' ', ' ', '█', ' ', ' '], 60],
-	[[' ', '▄', '█', '▀', ' '], 70],
-];
-
-function EyeRow({cap}: {readonly cap: EyeCap}) {
-	const block =
-		cap === '█' ? '██████' : cap === ' ' ? '      ' : `${cap}████${cap}`;
+function EyeRow({cap}: {readonly cap: '▄' | '█' | '▀'}) {
+	const block = cap === '█' ? '██████' : `${cap}████${cap}`;
 	return (
 		<Box>
 			<Text color={C}>{'   │         '}</Text>
@@ -34,40 +19,16 @@ function EyeRow({cap}: {readonly cap: EyeCap}) {
 }
 
 function Logo() {
-	// -1 = idle/open; 0..N-1 = current blink frame
-	const [blinkStep, setBlinkStep] = useState(-1);
-
-	useEffect(() => {
-		if (blinkStep === -1) {
-			const id = setTimeout(() => setBlinkStep(0), 2000 + Math.random() * 2000);
-			return () => clearTimeout(id);
-		}
-
-		if (blinkStep >= BLINK_SEQ.length) {
-			setBlinkStep(-1);
-			return;
-		}
-
-		const [, duration] = BLINK_SEQ[blinkStep]!;
-		const id = setTimeout(() => setBlinkStep(s => s + 1), duration);
-		return () => clearTimeout(id);
-	}, [blinkStep]);
-
-	const caps =
-		blinkStep >= 0 && blinkStep < BLINK_SEQ.length
-			? BLINK_SEQ[blinkStep]![0]
-			: OPEN;
-
 	return (
 		<Box flexDirection="column">
 			<Text color={C}>{'      ╭────────────────────────────╮'}</Text>
 			<Text color={C}>{'   ╭──╯                            ╰──╮'}</Text>
 			<Text color={C}>{'   │                                  │'}</Text>
-			<EyeRow cap={caps[0]} />
-			<EyeRow cap={caps[1]} />
-			<EyeRow cap={caps[2]} />
-			<EyeRow cap={caps[3]} />
-			<EyeRow cap={caps[4]} />
+			<EyeRow cap="▄" />
+			<EyeRow cap="█" />
+			<EyeRow cap="█" />
+			<EyeRow cap="█" />
+			<EyeRow cap="▀" />
 			<Text color={C}>{'   │                                  │'}</Text>
 			<Text color={C}>{'   ╰──────────────────────────────────╯'}</Text>
 		</Box>
@@ -75,6 +36,12 @@ function Logo() {
 }
 
 export default function Index() {
+	const {exit} = useApp();
+
+	useEffect(() => {
+		exit();
+	}, []);
+
 	return (
 		<Box flexDirection="column" paddingTop={1}>
 			<Logo />
