@@ -5,9 +5,9 @@ import {getEncryptedBalanceQuerierFunction} from '@umbra-privacy/sdk';
 import {type QueryEncryptedBalanceResult} from '@umbra-privacy/sdk/interfaces';
 import {address, type Address} from '@solana/kit';
 
-import {getClient} from '../lib/umbra/client.js';
-import {Spinner, ErrorMessage} from '../components/index.js';
-import {type ErrorState} from '../lib/errors.js';
+import {getClient} from '../../lib/umbra/client.js';
+import {Spinner, ErrorMessage} from '../../components/index.js';
+import {type ErrorState} from '../../lib/errors.js';
 
 export const args = zod.array(zod.string()).describe('mint addresses to query');
 
@@ -104,7 +104,7 @@ export default function Balance({args: mints}: Props) {
 		<Box flexDirection="column">
 			<Text color="green">✓ Encrypted balances</Text>
 			<Box flexDirection="column" marginTop={1} marginLeft={2}>
-				{state.entries.map(entry => (
+				{state.entries.map((entry: BalanceEntry) => (
 					<BalanceRow key={entry.mint} {...entry} />
 				))}
 			</Box>
