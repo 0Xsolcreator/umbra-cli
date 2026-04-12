@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
+import {COMMANDS} from '../lib/commands.js';
 
 const C = 'white' as const; // cloud outline
 const E = 'cyan' as const; // eye pills
@@ -20,11 +21,7 @@ const BLINK_SEQ: ReadonlyArray<readonly [EyeState, number]> = [
 
 function EyeRow({cap}: {readonly cap: EyeCap}) {
 	const block =
-		cap === '█'
-			? '██████'
-			: cap === ' '
-				? '      '
-				: `${cap}████${cap}`;
+		cap === '█' ? '██████' : cap === ' ' ? '      ' : `${cap}████${cap}`;
 	return (
 		<Box>
 			<Text color={C}>{'   │         '}</Text>
@@ -42,10 +39,7 @@ function Logo() {
 
 	useEffect(() => {
 		if (blinkStep === -1) {
-			const id = setTimeout(
-				() => setBlinkStep(0),
-				2000 + Math.random() * 2000,
-			);
+			const id = setTimeout(() => setBlinkStep(0), 2000 + Math.random() * 2000);
 			return () => clearTimeout(id);
 		}
 
@@ -79,19 +73,6 @@ function Logo() {
 		</Box>
 	);
 }
-
-type CommandInfo = {name: string; description: string};
-
-const COMMANDS: CommandInfo[] = [
-	{name: 'init', description: 'Link your keypair and configure the CLI'},
-	{name: 'register', description: 'Publish your stealth meta-address on-chain'},
-	{name: 'deposit', description: 'Send a private token transfer to a stealth address'},
-	{name: 'withdraw', description: 'Withdraw tokens from your stealth wallet'},
-	{name: 'balance', description: 'Query your encrypted token balances'},
-	{name: 'utxo scan', description: 'Scan the chain for unspent stealth UTXOs'},
-	{name: 'utxo claim', description: 'Claim scanned UTXOs to your wallet'},
-	{name: 'utxo create', description: 'Create a new stealth UTXO'},
-];
 
 export default function Index() {
 	return (
