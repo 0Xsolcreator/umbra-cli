@@ -12,10 +12,9 @@ import {
 	getClaimReceiverClaimableUtxoIntoEncryptedBalanceProver,
 	getClaimSelfClaimableUtxoIntoPublicBalanceProver,
 } from '@umbra-privacy/web-zk-prover';
-import {type U32} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
-import {createUtxoScanner} from '../../lib/umbra/scanner.js';
+import {scanAcrossTrees} from '../../lib/umbra/scanner.js';
 import {Spinner, ErrorMessage} from '../../components/index.js';
 import {formatFetchUtxosError, formatClaimUtxoError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
@@ -24,7 +23,17 @@ export const options = zod.object({
 	tree: zod.coerce
 		.bigint()
 		.optional()
-		.describe('Merkle tree index to scan (default: 0)'),
+		.describe('First Merkle tree index to scan (default: 0)'),
+	endTree: zod.coerce
+		.bigint()
+		.optional()
+		.describe(
+			'Last Merkle tree index to scan, inclusive (default: same as --tree)',
+		),
+	allTrees: zod
+		.boolean()
+		.default(false)
+		.describe('Scan all trees from --tree until no more are found'),
 	start: zod.coerce
 		.bigint()
 		.optional()
@@ -33,6 +42,12 @@ export const options = zod.object({
 		.bigint()
 		.optional()
 		.describe('End insertion index, inclusive (default: end of tree)'),
+	pageSize: zod.coerce
+		.bigint()
+		.optional()
+		.describe(
+			'Number of indices to cover per request for paginated scanning (default: entire range)',
+		),
 	to: zod
 		.enum(['encrypted', 'public'])
 		.default('encrypted')
@@ -41,7 +56,7 @@ export const options = zod.object({
 		),
 	relayer: zod
 		.string()
-		.default('https://relayer.api.umbraprivacy.com')
+		.default('https://relayer.api-devnet.umbraprivacy.com')
 		.describe('Relayer API endpoint'),
 });
 
@@ -90,11 +105,32 @@ export default function Claim({options: opts}: Props) {
 				}
 
 				// --- Scan ---
-				const scan = createUtxoScanner(client);
-				const scanResult = await scan(
-					(opts.tree ?? 0n) as U32,
-					(opts.start ?? 0n) as U32,
-					opts.end !== undefined ? (opts.end as U32) : undefined,
+				const startTree = opts.tree ?? 0n;
+				const endTree = opts.allTrees ? undefined : opts.endTree ?? startTree;
+
+				const scanResult = await scanAcrossTrees(
+					client,
+					startTree,
+					endTree,
+					opts.start ?? 0n,
+					opts.end,
+					{
+						pageSize: opts.pageSize,
+						onProgress({treeIndex, page, nextStart}) {
+							const treeLabel =
+								endTree !== undefined
+									? `tree ${treeIndex} of ${endTree}`
+									: `tree ${treeIndex}`;
+							const pageLabel =
+								opts.pageSize !== undefined
+									? ` — page ${page + 1} done, next index ${nextStart}`
+									: '';
+							setState({
+								status: 'scanning',
+								stepLabel: `Scanning ${treeLabel}${pageLabel}...`,
+							});
+						},
+					},
 				);
 
 				const selfBurnableAll = [
