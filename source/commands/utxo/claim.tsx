@@ -27,7 +27,9 @@ export const options = zod.object({
 	endTree: zod.coerce
 		.bigint()
 		.optional()
-		.describe('Last Merkle tree index to scan, inclusive (default: same as --tree)'),
+		.describe(
+			'Last Merkle tree index to scan, inclusive (default: same as --tree)',
+		),
 	allTrees: zod
 		.boolean()
 		.default(false)
@@ -54,7 +56,7 @@ export const options = zod.object({
 		),
 	relayer: zod
 		.string()
-		.default('https://relayer.api.umbraprivacy.com')
+		.default('https://relayer.api-devnet.umbraprivacy.com')
 		.describe('Relayer API endpoint'),
 });
 
@@ -104,9 +106,7 @@ export default function Claim({options: opts}: Props) {
 
 				// --- Scan ---
 				const startTree = opts.tree ?? 0n;
-				const endTree = opts.allTrees
-					? undefined
-					: (opts.endTree ?? startTree);
+				const endTree = opts.allTrees ? undefined : opts.endTree ?? startTree;
 
 				const scanResult = await scanAcrossTrees(
 					client,

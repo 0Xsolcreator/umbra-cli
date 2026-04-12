@@ -5,7 +5,7 @@
       "name": "umbra-cli",
       "dependencies": {
         "@solana/kit": "^6.7.0",
-        "@umbra-privacy/sdk": "^3.0.0",
+        "@umbra-privacy/sdk": "^4.0.0",
         "@umbra-privacy/web-zk-prover": "^2.0.1",
         "ink": "^4.1.0",
         "ink-spinner": "^5.0.0",
@@ -203,7 +203,7 @@
 
     "@umbra-privacy/indexer-read-service-client": ["@umbra-privacy/indexer-read-service-client@2.0.1", "", { "dependencies": { "@bufbuild/protobuf": "^2.0.0", "@umbra-privacy/indexer-proto-gen": "2.0.1" } }, "sha512-sIlN8TwUBjKUO8ZFE9teGbO3GiqjPMpB2uqlFeF2O7XGNBXkQ5g9PjqNiCBZ8xJOIq8bEJNxUceezj64EAhOjA=="],
 
-    "@umbra-privacy/sdk": ["@umbra-privacy/sdk@3.0.0", "", { "dependencies": { "@noble/ciphers": "^2.1.1", "@noble/curves": "^2.0.1", "@noble/hashes": "^2.0.1", "@solana/kit": "^6.0.1", "@solana/wallet-standard-features": "^1.3.0", "@umbra-privacy/arcium-codama": "2.0.1", "@umbra-privacy/indexer-read-service-client": "2.0.1", "@umbra-privacy/umbra-codama": "2.0.2", "@wallet-standard/core": "^1.1.0" } }, "sha512-3dQsUdIYYmTSK2jFvUMuFa3KbEqaIm9RypFicL5awWGko/cGErNeVvgsiebURUtEPqb738ENaf4BPVKD5IkXTw=="],
+    "@umbra-privacy/sdk": ["@umbra-privacy/sdk@4.0.0", "", { "dependencies": { "@noble/ciphers": "^2.1.1", "@noble/curves": "^2.0.1", "@noble/hashes": "^2.0.1", "@solana/kit": "^6.0.1", "@solana/wallet-standard-features": "^1.3.0", "@umbra-privacy/arcium-codama": "2.0.1", "@umbra-privacy/indexer-read-service-client": "2.0.1", "@umbra-privacy/umbra-codama": "2.0.2", "@wallet-standard/core": "^1.1.0" } }, "sha512-QZtOql8/jutjI4tyoaTbplCPChxYGmFn2qM7BSlmoTtL5uaQT8DskfpgZlzIyUESMa4xYqIxqrQVH+ApdfPnmw=="],
 
     "@umbra-privacy/umbra-codama": ["@umbra-privacy/umbra-codama@2.0.2", "", { "dependencies": { "@solana-program/system": "^0.11.0", "@solana-program/token-2022": "^0.9.0", "@solana/kit": "^6.0.1", "@solana/sysvars": "^6.0.1" } }, "sha512-ogGoHbxTQyvEdaPOyYTAx48XNQgvXcvkt5CdTKwPbRrcb3J6zhYEvrdyFBlOuI8GKjcpITi+5AiPnd41BikRHQ=="],
 
