@@ -1,14 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
 import zod from 'zod';
-import {getPublicBalanceToEncryptedBalanceDirectDepositorFunction} from '@umbra-privacy/sdk';
-
-import {getClient} from '../lib/umbra/client.js';
+import {getEncryptedBalanceToPublicBalanceDirectWithdrawerFunction} from '@umbra-privacy/sdk';
 import {address} from '@solana/kit';
-import {U64} from '@umbra-privacy/sdk/types';
-import {Spinner, ErrorMessage} from '../components/index.js';
-import {formatDepositError} from '../lib/errors.js';
-import {type ErrorState} from '../lib/errors.js';
+import {type U64} from '@umbra-privacy/sdk/types';
+
+import {getClient} from '../../lib/umbra/client.js';
+import {Spinner, ErrorMessage} from '../../components/index.js';
+import {formatWithdrawalError} from '../../lib/errors.js';
+import {type ErrorState} from '../../lib/errors.js';
 
 export const args = zod.tuple([
 	zod.string().describe('mint'),
@@ -16,10 +16,10 @@ export const args = zod.tuple([
 ]);
 
 export const options = zod.object({
-	recipient: zod
+	destination: zod
 		.string()
 		.optional()
-		.describe('Recipient wallet address (defaults to your own address)'),
+		.describe('Destination wallet address (defaults to your own address)'),
 });
 
 type Props = {
@@ -28,14 +28,14 @@ type Props = {
 };
 
 type State =
-	| {status: 'depositing'; stepLabel: string}
+	| {status: 'withdrawing'; stepLabel: string}
 	| {status: 'success'; queueSignature: string; callbackSignature?: string}
 	| ErrorState;
 
-export default function Deposit({args: [mint, amount], options: opts}: Props) {
+export default function Withdraw({args: [mint, amount], options: opts}: Props) {
 	const [state, setState] = useState<State>({
-		status: 'depositing',
-		stepLabel: 'Preparing deposit...',
+		status: 'withdrawing',
+		stepLabel: 'Preparing withdrawal...',
 	});
 
 	useEffect(() => {
@@ -43,14 +43,17 @@ export default function Deposit({args: [mint, amount], options: opts}: Props) {
 			try {
 				const client = await getClient();
 
-				const destination = opts.recipient ?? client.signer.address;
+				const destination = opts.destination ?? client.signer.address;
 
-				setState({status: 'depositing', stepLabel: 'Submitting deposit...'});
+				setState({
+					status: 'withdrawing',
+					stepLabel: `Withdrawing to ${destination}...`,
+				});
 
-				const deposit =
-					getPublicBalanceToEncryptedBalanceDirectDepositorFunction({client});
+				const withdraw =
+					getEncryptedBalanceToPublicBalanceDirectWithdrawerFunction({client});
 
-				const result = await deposit(
+				const result = await withdraw(
 					address(destination),
 					address(mint),
 					amount as U64,
@@ -62,20 +65,21 @@ export default function Deposit({args: [mint, amount], options: opts}: Props) {
 					callbackSignature: result.callbackSignature,
 				});
 			} catch (err: unknown) {
-				setState({status: 'error', message: formatDepositError(err)});
+				setState({status: 'error', message: formatWithdrawalError(err)});
 			}
 		}
 
 		void run();
 	}, []);
 
-	if (state.status === 'depositing') return <Spinner label={state.stepLabel} />;
+	if (state.status === 'withdrawing')
+		return <Spinner label={state.stepLabel} />;
 	if (state.status === 'error')
-		return <ErrorMessage title="Deposit failed" detail={state.message} />;
+		return <ErrorMessage title="Withdrawal failed" detail={state.message} />;
 
 	return (
 		<Box flexDirection="column">
-			<Text color="green">✓ Deposit complete</Text>
+			<Text color="green">✓ Withdrawal complete</Text>
 			<Box flexDirection="column" marginTop={1} marginLeft={2}>
 				<Text dimColor>Queue: {state.queueSignature}</Text>
 				{state.callbackSignature && (
