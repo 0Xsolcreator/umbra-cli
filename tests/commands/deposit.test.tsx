@@ -49,7 +49,7 @@ mock.module('@umbra-privacy/sdk/errors', () => ({
 	isEncryptedDepositError: mockIsEncryptedDepositError,
 }));
 
-import Deposit from '../../source/commands/deposit.js';
+import Deposit from '../../source/commands/eta/deposit.js';
 import {waitFor} from '../utils.js';
 
 const DEFAULT_ARGS = ['MintAddress111', 1_000_000n] as [string, bigint];

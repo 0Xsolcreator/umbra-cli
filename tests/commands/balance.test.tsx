@@ -29,7 +29,7 @@ mock.module('@umbra-privacy/sdk', () => ({
 	getEncryptedBalanceQuerierFunction: mockGetBalanceQuerier,
 }));
 
-import Balance from '../../source/commands/balance.js';
+import Balance from '../../source/commands/eta/balance.js';
 import {waitFor} from '../utils.js';
 
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';

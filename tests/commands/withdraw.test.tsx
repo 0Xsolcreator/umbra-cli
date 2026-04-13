@@ -41,7 +41,7 @@ mock.module('@umbra-privacy/sdk/errors', () => ({
 	isEncryptedWithdrawalError: mockIsEncryptedWithdrawalError,
 }));
 
-import Withdraw from '../../source/commands/withdraw.js';
+import Withdraw from '../../source/commands/eta/withdraw.js';
 import {waitFor} from '../utils.js';
 
 const DEFAULT_ARGS = ['MintAddress111', 1_000_000n] as [string, bigint];
