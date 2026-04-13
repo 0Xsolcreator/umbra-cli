@@ -1,3 +1,10 @@
+## [0.1.3](https://github.com/0Xsolcreator/umbra-cli/compare/v0.1.2...v0.1.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* :wrench: relese config ([46dcf45](https://github.com/0Xsolcreator/umbra-cli/commit/46dcf45c21da73e317698dffdf96de50691bfaf9))
+
 ## [0.1.2](https://github.com/0Xsolcreator/umbra-cli/compare/v0.1.1...v0.1.2) (2026-04-13)
 
 
