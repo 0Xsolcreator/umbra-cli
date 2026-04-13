@@ -16,6 +16,14 @@ Command.prototype.helpInformation = function () {
 		.replace(/(\((?:default|choices):.*?\))/g, `${DIM}$1${RESET}`);
 };
 
+const VALID_COMMANDS = new Set(['init', 'register', 'eta', 'utxo']);
+
+const arg = process.argv[2];
+if (arg && !arg.startsWith('-') && !VALID_COMMANDS.has(arg)) {
+	console.error(`error: unknown command '${arg}'\n\nRun ${CYAN}umbra --help${RESET} for available commands.`);
+	process.exit(1);
+}
+
 const app = new Pastel({
 	importMeta: import.meta,
 });
