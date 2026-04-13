@@ -6,6 +6,8 @@ Privacy-preserving token transfers on Solana, from your terminal.
 >
 > **[Documentation](https://umbra.0xcreator.dev)**
 
+![umbra-cli demo](demo.gif)
+
 ---
 
 ## Install
