@@ -1,3 +1,10 @@
+## [0.1.1](https://github.com/0Xsolcreator/umbra-cli/compare/v0.1.0...v0.1.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* trigger npm publish ([a1a94d6](https://github.com/0Xsolcreator/umbra-cli/commit/a1a94d67a7e37d779ac03425471a60b8753027ed))
+
 # [0.1.0](https://github.com/0Xsolcreator/umbra-cli/compare/v0.0.0...v0.1.0) (2026-04-13)
 
 
