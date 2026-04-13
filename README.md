@@ -11,7 +11,7 @@ Privacy-preserving token transfers on Solana, from your terminal.
 ## Install
 
 ```bash
-npm install --global umbra-cli
+npm install --global umbraprivacy-cli
 ```
 
 Requires [Bun](https://bun.sh) >= 1.0 and a Solana keypair on disk. If you don't have one:
@@ -82,7 +82,7 @@ This starts a local dev server at `http://localhost:3000`. Navigation is configu
 bun install
 bun run build   # tsc + chmod dist/cli.js
 bun run dev     # tsc --watch
-bun test        # prettier + xo + bun test
+bun test tests/ # prettier + xo + bun test
 ```
 
 ---
