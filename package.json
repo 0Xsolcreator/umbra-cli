@@ -12,10 +12,12 @@
 	"scripts": {
 		"build": "tsc && chmod +x dist/cli.js",
 		"dev": "tsc --watch",
-		"test": "prettier --check . && xo && bun test tests/"
+		"test": "prettier --check . && xo && bun test tests/",
+		"postinstall": "node scripts/postinstall.js"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"scripts"
 	],
 	"dependencies": {
 		"@solana/kit": "^6.7.0",
