@@ -1,3 +1,10 @@
+## [0.1.5](https://github.com/0Xsolcreator/umbra-cli/compare/v0.1.4...v0.1.5) (2026-04-13)
+
+
+### Bug Fixes
+
+* :hammer: add invalid commands helper ([3cb8731](https://github.com/0Xsolcreator/umbra-cli/commit/3cb873174a18a6cca0b8af69968a11d858b6ec1e))
+
 ## [0.1.4](https://github.com/0Xsolcreator/umbra-cli/compare/v0.1.3...v0.1.4) (2026-04-13)
 
 
