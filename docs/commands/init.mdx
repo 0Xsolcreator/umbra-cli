@@ -15,10 +15,10 @@ Writes a config file to `~/.umbra-cli/config.json`. Run this once before using a
 |---|---|---|
 | `--keypair <path>` | `~/.config/solana/id.json` | Path to your Solana keypair JSON file |
 | `--network <name>` | `devnet` | Network to connect to: `mainnet`, `devnet`, or `localnet` |
-| `--rpc-url <url>` | Network default | HTTP RPC endpoint |
-| `--rpc-subscriptions-url <url>` | Network default | WebSocket RPC endpoint |
-| `--indexer-endpoint <url>` | Umbra devnet indexer | Umbra indexer API base URL (required for UTXO commands) |
-| `--defer-master-seed` | `false` | Delay the master seed signing prompt until the first operation that needs it |
+| `--rpcUrl <url>` | Network default | HTTP RPC endpoint |
+| `--rpcSubscriptionsUrl <url>` | Network default | WebSocket RPC endpoint |
+| `--indexerEndpoint <url>` | Umbra devnet indexer | Umbra indexer API base URL (required for UTXO commands) |
+| `--deferMasterSeed` | `false` | Delay the master seed signing prompt until the first operation that needs it |
 
 ## Network defaults
 
@@ -40,9 +40,9 @@ umbra init --network mainnet --keypair ~/wallets/my-wallet.json
 # Custom RPC and indexer
 umbra init \
   --network mainnet \
-  --rpc-url https://rpc.helius.xyz/?api-key=YOUR_KEY \
-  --rpc-subscriptions-url wss://rpc.helius.xyz/?api-key=YOUR_KEY \
-  --indexer-endpoint https://indexer.api.umbraprivacy.com
+  --rpcUrl https://rpc.helius.xyz/?api-key=YOUR_KEY \
+  --rpcSubscriptionsUrl wss://rpc.helius.xyz/?api-key=YOUR_KEY \
+  --indexerEndpoint https://indexer.api.umbraprivacy.com
 ```
 
 ## Config file
@@ -61,5 +61,5 @@ The config is saved at `~/.umbra-cli/config.json`:
 ```
 
 <Note>
-The `--indexer-endpoint` is required for UTXO commands (`utxo scan`, `utxo claim`). For encrypted balance commands only (`eta deposit`, `eta balance`, `eta withdraw`) it can be omitted.
+The `--indexerEndpoint` is required for UTXO commands (`utxo scan`, `utxo claim`). For encrypted balance commands only (`eta deposit`, `eta balance`, `eta withdraw`) it can be omitted.
 </Note>

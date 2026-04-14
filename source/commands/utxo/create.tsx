@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Text} from 'ink';
-import zod from 'zod';
+import {Box, Text, useApp, render} from 'ink';
+import {Args, Command, Flags} from '@oclif/core';
 import {
 	getEncryptedBalanceToSelfClaimableUtxoCreatorFunction,
 	getEncryptedBalanceToReceiverClaimableUtxoCreatorFunction,
@@ -17,31 +17,14 @@ import {address} from '@solana/kit';
 import {type U64} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
+import {bigintArg} from '../../lib/flags.js';
 import {Spinner, ErrorMessage} from '../../components/index.js';
 import {formatCreateUtxoError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
 
-export const args = zod.tuple([
-	zod.string().describe('mint'),
-	zod.coerce.bigint().describe('amount'),
-]);
-
-export const options = zod.object({
-	from: zod
-		.enum(['public', 'encrypted'])
-		.default('public')
-		.describe('Token source: "public" (ATA) or "encrypted" (ETA) balance'),
-	receiver: zod
-		.string()
-		.optional()
-		.describe(
-			'Recipient wallet address — creates a receiver claimable UTXO (defaults to self-claimable)',
-		),
-});
-
 type Props = {
-	args: zod.infer<typeof args>;
-	options: zod.infer<typeof options>;
+	args: [string, bigint];
+	options: {from: string; receiver?: string};
 };
 
 type State =
@@ -56,6 +39,7 @@ type State =
 	| ErrorState;
 
 export default function Create({args: [mint, amount], options: opts}: Props) {
+	const {exit} = useApp();
 	const [state, setState] = useState<State>({
 		status: 'creating',
 		stepLabel: 'Preparing UTXO...',
@@ -140,8 +124,11 @@ export default function Create({args: [mint, amount], options: opts}: Props) {
 						createUtxoSignature: result.createUtxoSignature,
 					});
 				}
+
+				exit();
 			} catch (err: unknown) {
 				setState({status: 'error', message: formatCreateUtxoError(err)});
+				exit();
 			}
 		}
 
@@ -169,4 +156,38 @@ export default function Create({args: [mint, amount], options: opts}: Props) {
 			</Box>
 		</Box>
 	);
+}
+
+export class CreateCommand extends Command {
+	static override description = 'Create a new stealth UTXO';
+
+	static override args = {
+		mint: Args.string({description: 'Mint address', required: true}),
+		amount: bigintArg({description: 'Amount in base units', required: true}),
+	};
+
+	static override flags = {
+		from: Flags.string({
+			description:
+				'Token source: "public" (ATA) or "encrypted" (ETA) balance',
+			options: ['public', 'encrypted'],
+			default: 'public',
+		}),
+		receiver: Flags.string({
+			description:
+				'Recipient wallet address — creates a receiver claimable UTXO (defaults to self-claimable)',
+			required: false,
+		}),
+	};
+
+	async run() {
+		const {args, flags} = await this.parse(CreateCommand);
+		const {waitUntilExit} = render(
+			<Create
+				args={[args.mint, args.amount]}
+				options={{from: flags.from, receiver: flags.receiver}}
+			/>,
+		);
+		await waitUntilExit();
+	}
 }

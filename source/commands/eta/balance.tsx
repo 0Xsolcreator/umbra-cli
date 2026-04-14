@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Text} from 'ink';
-import zod from 'zod';
+import {Box, Text, useApp, render} from 'ink';
+import {Args, Command} from '@oclif/core';
 import {getEncryptedBalanceQuerierFunction} from '@umbra-privacy/sdk';
 import {type QueryEncryptedBalanceResult} from '@umbra-privacy/sdk/interfaces';
 import {address, type Address} from '@solana/kit';
@@ -9,10 +9,8 @@ import {getClient} from '../../lib/umbra/client.js';
 import {Spinner, ErrorMessage} from '../../components/index.js';
 import {type ErrorState} from '../../lib/errors.js';
 
-export const args = zod.array(zod.string()).describe('mint addresses to query');
-
 type Props = {
-	args: zod.infer<typeof args>;
+	args: string[];
 };
 
 type BalanceEntry = {mint: Address; result: QueryEncryptedBalanceResult};
@@ -69,6 +67,7 @@ function BalanceRow({mint, result}: BalanceEntry) {
 }
 
 export default function Balance({args: mints}: Props) {
+	const {exit} = useApp();
 	const [state, setState] = useState<State>({status: 'querying'});
 
 	useEffect(() => {
@@ -84,11 +83,13 @@ export default function Balance({args: mints}: Props) {
 				);
 
 				setState({status: 'success', entries});
+				exit();
 			} catch (err: unknown) {
 				setState({
 					status: 'error',
 					message: err instanceof Error ? err.message : String(err),
 				});
+				exit();
 			}
 		}
 
@@ -110,4 +111,23 @@ export default function Balance({args: mints}: Props) {
 			</Box>
 		</Box>
 	);
+}
+
+export class BalanceCommand extends Command {
+	static override description = 'Check your encrypted token ETA balances';
+
+	static override strict = false;
+
+	static override args = {
+		mints: Args.string({
+			description: 'Mint addresses to query',
+			required: true,
+		}),
+	};
+
+	async run() {
+		const {argv} = await this.parse(BalanceCommand);
+		const {waitUntilExit} = render(<Balance args={argv as string[]} />);
+		await waitUntilExit();
+	}
 }

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Text} from 'ink';
-import zod from 'zod';
+import {Box, Text, useApp, render} from 'ink';
+import {Command, Flags} from '@oclif/core';
 import {
 	getSelfClaimableUtxoToEncryptedBalanceClaimerFunction,
 	getSelfClaimableUtxoToPublicBalanceClaimerFunction,
@@ -15,53 +15,22 @@ import {
 
 import {getClient} from '../../lib/umbra/client.js';
 import {scanAcrossTrees} from '../../lib/umbra/scanner.js';
+import {bigintFlag} from '../../lib/flags.js';
 import {Spinner, ErrorMessage} from '../../components/index.js';
 import {formatFetchUtxosError, formatClaimUtxoError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
 
-export const options = zod.object({
-	tree: zod.coerce
-		.bigint()
-		.optional()
-		.describe('First Merkle tree index to scan (default: 0)'),
-	endTree: zod.coerce
-		.bigint()
-		.optional()
-		.describe(
-			'Last Merkle tree index to scan, inclusive (default: same as --tree)',
-		),
-	allTrees: zod
-		.boolean()
-		.default(false)
-		.describe('Scan all trees from --tree until no more are found'),
-	start: zod.coerce
-		.bigint()
-		.optional()
-		.describe('Start insertion index, inclusive (default: 0)'),
-	end: zod.coerce
-		.bigint()
-		.optional()
-		.describe('End insertion index, inclusive (default: end of tree)'),
-	pageSize: zod.coerce
-		.bigint()
-		.optional()
-		.describe(
-			'Number of indices to cover per request for paginated scanning (default: entire range)',
-		),
-	to: zod
-		.enum(['encrypted', 'public'])
-		.default('encrypted')
-		.describe(
-			'Claim destination for self-claimable UTXOs: "encrypted" balance or "public" ATA (default: encrypted). Received UTXOs always go to encrypted.',
-		),
-	relayer: zod
-		.string()
-		.default('https://relayer.api-devnet.umbraprivacy.com')
-		.describe('Relayer API endpoint'),
-});
-
 type Props = {
-	options: zod.infer<typeof options>;
+	options: {
+		tree?: bigint;
+		endTree?: bigint;
+		allTrees: boolean;
+		start?: bigint;
+		end?: bigint;
+		pageSize?: bigint;
+		to: string;
+		relayer: string;
+	};
 };
 
 type BatchInfo = {
@@ -88,6 +57,7 @@ function collectBatches(
 }
 
 export default function Claim({options: opts}: Props) {
+	const {exit} = useApp();
 	const [state, setState] = useState<State>({
 		status: 'scanning',
 		stepLabel: 'Scanning for claimable UTXOs...',
@@ -145,6 +115,7 @@ export default function Claim({options: opts}: Props) {
 
 				if (totalFound === 0) {
 					setState({status: 'nothing'});
+					exit();
 					return;
 				}
 
@@ -162,7 +133,8 @@ export default function Claim({options: opts}: Props) {
 
 				if (selfBurnableAll.length > 0) {
 					if (opts.to === 'public') {
-						const zkProver = getClaimSelfClaimableUtxoIntoPublicBalanceProver();
+						const zkProver =
+							getClaimSelfClaimableUtxoIntoPublicBalanceProver();
 						const claim = getSelfClaimableUtxoToPublicBalanceClaimerFunction(
 							{client},
 							{fetchBatchMerkleProof, zkProver, relayer},
@@ -172,10 +144,11 @@ export default function Claim({options: opts}: Props) {
 					} else {
 						const zkProver =
 							getClaimReceiverClaimableUtxoIntoEncryptedBalanceProver();
-						const claim = getSelfClaimableUtxoToEncryptedBalanceClaimerFunction(
-							{client},
-							{fetchBatchMerkleProof, zkProver, relayer},
-						);
+						const claim =
+							getSelfClaimableUtxoToEncryptedBalanceClaimerFunction(
+								{client},
+								{fetchBatchMerkleProof, zkProver, relayer},
+							);
 						const result = await claim(selfBurnableAll);
 						allBatches.push(...collectBatches(result.batches));
 					}
@@ -198,11 +171,13 @@ export default function Claim({options: opts}: Props) {
 					claimedCount: totalFound,
 					batches: allBatches,
 				});
+				exit();
 			} catch (err: unknown) {
 				const message = isFetchUtxosError(err)
 					? formatFetchUtxosError(err)
 					: formatClaimUtxoError(err);
 				setState({status: 'error', message});
+				exit();
 			}
 		}
 
@@ -236,4 +211,66 @@ export default function Claim({options: opts}: Props) {
 			</Box>
 		</Box>
 	);
+}
+
+export class ClaimCommand extends Command {
+	static override description = 'Claim scanned UTXOs to your wallet';
+
+	static override flags = {
+		tree: bigintFlag({
+			description: 'First Merkle tree index to scan (default: 0)',
+			required: false,
+		}),
+		endTree: bigintFlag({
+			description:
+				'Last Merkle tree index to scan, inclusive (default: same as --tree)',
+			required: false,
+		}),
+		allTrees: Flags.boolean({
+			description: 'Scan all trees from --tree until no more are found',
+			default: false,
+		}),
+		start: bigintFlag({
+			description: 'Start insertion index, inclusive (default: 0)',
+			required: false,
+		}),
+		end: bigintFlag({
+			description: 'End insertion index, inclusive (default: end of tree)',
+			required: false,
+		}),
+		pageSize: bigintFlag({
+			description:
+				'Number of indices to cover per request for paginated scanning (default: entire range)',
+			required: false,
+		}),
+		to: Flags.string({
+			description:
+				'Claim destination for self-claimable UTXOs: "encrypted" balance or "public" ATA (default: encrypted). Received UTXOs always go to encrypted.',
+			options: ['encrypted', 'public'],
+			default: 'encrypted',
+		}),
+		relayer: Flags.string({
+			description: 'Relayer API endpoint',
+			default: 'https://relayer.api-devnet.umbraprivacy.com',
+		}),
+	};
+
+	async run() {
+		const {flags} = await this.parse(ClaimCommand);
+		const {waitUntilExit} = render(
+			<Claim
+				options={{
+					tree: flags.tree,
+					endTree: flags.endTree,
+					allTrees: flags.allTrees,
+					start: flags.start,
+					end: flags.end,
+					pageSize: flags.pageSize,
+					to: flags.to,
+					relayer: flags.relayer,
+				}}
+			/>,
+		);
+		await waitUntilExit();
+	}
 }

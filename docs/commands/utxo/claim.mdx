@@ -24,11 +24,11 @@ Received UTXOs (sent by another user) always go to your encrypted balance, regar
 | Flag | Default | Description |
 |---|---|---|
 | `--tree <n>` | `0` | First Merkle tree index to scan |
-| `--end-tree <n>` | Same as `--tree` | Last Merkle tree index to scan (inclusive) |
-| `--all-trees` | `false` | Scan all trees starting from `--tree` until no more are found |
+| `--endTree <n>` | Same as `--tree` | Last Merkle tree index to scan (inclusive) |
+| `--allTrees` | `false` | Scan all trees starting from `--tree` until no more are found |
 | `--start <n>` | `0` | Start insertion index (inclusive) |
 | `--end <n>` | End of tree | End insertion index (inclusive) |
-| `--page-size <n>` | Entire range | Insertion indices per indexer request |
+| `--pageSize <n>` | Entire range | Insertion indices per indexer request |
 | `--to <destination>` | `encrypted` | Claim destination for self-claimable UTXOs: `encrypted` or `public` |
 | `--relayer <url>` | Umbra devnet relayer | Relayer API endpoint used to submit claim transactions |
 
@@ -42,7 +42,7 @@ umbra utxo claim
 umbra utxo claim --to public
 
 # Scan all trees and claim
-umbra utxo claim --all-trees
+umbra utxo claim --allTrees
 
 # Continue from a known position
 umbra utxo claim --tree 2 --start 1500
@@ -63,6 +63,6 @@ Each batch corresponds to a group of UTXOs processed together. The transaction s
 
 ## Prerequisites
 
-- `umbra init` with `--indexer-endpoint` configured.
+- `umbra init` with `--indexerEndpoint` configured.
 - `umbra register` must have been run (both `--confidential` and `--anonymous` for full support).
 - For `--to public`: the destination ATA must already exist for each claimed mint.
