@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://umbra.0xcreator.dev/sitemap.xml

@@ -8,6 +8,27 @@
 		"light": "#22d3ee",
 		"dark": "#0891b2"
 	},
+	"seo": {
+		"indexing": "all",
+		"metatags": {
+			"description": "Umbra CLI — privacy-preserving token transfers on Solana from your terminal. Shield tokens, manage encrypted balances, and send anonymous stealth UTXOs.",
+			"keywords": "Umbra, Umbra CLI, Solana, privacy, stealth transfers, encrypted token accounts, ETA, UTXO, mixer, anonymous, DeFi, CLI",
+			"author": "Umbra CLI",
+			"robots": "index, follow",
+			"googlebot": "index, follow",
+			"canonical": "https://umbra.0xcreator.dev",
+			"og:type": "website",
+			"og:site_name": "Umbra CLI",
+			"og:image": "/og.png",
+			"og:image:width": "1200",
+			"og:image:height": "630",
+			"og:locale": "en_US",
+			"twitter:card": "summary_large_image",
+			"twitter:image": "/og.png",
+			"apple-mobile-web-app-title": "Umbra CLI",
+			"application-name": "Umbra CLI"
+		}
+	},
 	"navigation": {
 		"groups": [
 			{
