@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Text} from 'ink';
-import zod from 'zod';
+import {Box, Text, useApp, render} from 'ink';
+import {Command, Flags} from '@oclif/core';
 import {
 	getUserAccountQuerierFunction,
 	getUserRegistrationFunction,
@@ -12,19 +12,11 @@ import {Spinner, ErrorMessage} from '../components/index.js';
 import {formatRegistrationError} from '../lib/errors.js';
 import {type ErrorState} from '../lib/errors.js';
 
-export const options = zod.object({
-	confidential: zod
-		.boolean()
-		.default(true)
-		.describe('Register X25519 key for encrypted balance (Shared mode)'),
-	anonymous: zod
-		.boolean()
-		.default(true)
-		.describe('Register user commitment for anonymous transfers'),
-});
-
 type Props = {
-	options: zod.infer<typeof options>;
+	options: {
+		confidential: boolean;
+		anonymous: boolean;
+	};
 };
 
 type State =
@@ -35,6 +27,7 @@ type State =
 	| ErrorState;
 
 export default function Register({options: opts}: Props) {
+	const {exit} = useApp();
 	const [state, setState] = useState<State>({status: 'checking'});
 
 	useEffect(() => {
@@ -52,6 +45,7 @@ export default function Register({options: opts}: Props) {
 
 				if (isFullyRegistered) {
 					setState({status: 'already-registered'});
+					exit();
 					return;
 				}
 
@@ -94,8 +88,10 @@ export default function Register({options: opts}: Props) {
 				});
 
 				setState({status: 'success', signatureCount: signatures.length});
+				exit();
 			} catch (err: unknown) {
 				setState({status: 'error', message: formatRegistrationError(err)});
+				exit();
 			}
 		}
 
@@ -123,10 +119,39 @@ export default function Register({options: opts}: Props) {
 			<Box marginTop={1} marginLeft={2}>
 				<Text dimColor>
 					{state.signatureCount}{' '}
-					{state.signatureCount === 1 ? 'transaction' : 'transactions'}{' '}
-					submitted
+					{state.signatureCount === 1 ? 'transaction' : 'transactions'} submitted
 				</Text>
 			</Box>
 		</Box>
 	);
+}
+
+export class RegisterCommand extends Command {
+	static override description = 'Publish your stealth meta-address on-chain';
+
+	static override flags = {
+		confidential: Flags.boolean({
+			description: 'Register X25519 key for encrypted balance (Shared mode)',
+			default: true,
+			allowNo: true,
+		}),
+		anonymous: Flags.boolean({
+			description: 'Register user commitment for anonymous transfers',
+			default: true,
+			allowNo: true,
+		}),
+	};
+
+	async run() {
+		const {flags} = await this.parse(RegisterCommand);
+		const {waitUntilExit} = render(
+			<Register
+				options={{
+					confidential: flags.confidential,
+					anonymous: flags.anonymous,
+				}}
+			/>,
+		);
+		await waitUntilExit();
+	}
 }
