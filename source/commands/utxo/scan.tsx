@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Text} from 'ink';
-import zod from 'zod';
+import {Box, Text, useApp, render} from 'ink';
+import {Command, Flags} from '@oclif/core';
 
 import {scanAcrossTrees} from '../../lib/umbra/scanner.js';
 import {getClient} from '../../lib/umbra/client.js';
@@ -10,40 +10,19 @@ import {
 	UtxoGroup,
 	type UtxoEntry,
 } from '../../components/index.js';
+import {bigintFlag} from '../../lib/flags.js';
 import {formatFetchUtxosError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
 
-export const options = zod.object({
-	tree: zod.coerce
-		.bigint()
-		.optional()
-		.describe('First Merkle tree index to scan (default: 0)'),
-	endTree: zod.coerce
-		.bigint()
-		.optional()
-		.describe('Last Merkle tree index to scan, inclusive (default: same as --tree)'),
-	allTrees: zod
-		.boolean()
-		.default(false)
-		.describe('Scan all trees from --tree until no more are found'),
-	start: zod.coerce
-		.bigint()
-		.optional()
-		.describe('Start insertion index in the first tree, inclusive (default: 0)'),
-	end: zod.coerce
-		.bigint()
-		.optional()
-		.describe('End insertion index within each tree, inclusive (default: end of tree)'),
-	pageSize: zod.coerce
-		.bigint()
-		.optional()
-		.describe(
-			'Number of insertion indices to cover per request (default: entire range)',
-		),
-});
-
 type Props = {
-	options: zod.infer<typeof options>;
+	options: {
+		tree?: bigint;
+		endTree?: bigint;
+		allTrees: boolean;
+		start?: bigint;
+		end?: bigint;
+		pageSize?: bigint;
+	};
 };
 
 type State =
@@ -66,6 +45,7 @@ function toEntries(
 }
 
 export default function Scan({options: opts}: Props) {
+	const {exit} = useApp();
 	const [state, setState] = useState<State>({
 		status: 'scanning',
 		stepLabel: 'Scanning for UTXOs...',
@@ -83,7 +63,8 @@ export default function Scan({options: opts}: Props) {
 				const start = opts.start ?? 0n;
 
 				const isMultiTree =
-					opts.allTrees || (opts.endTree !== undefined && opts.endTree > startTree);
+					opts.allTrees ||
+					(opts.endTree !== undefined && opts.endTree > startTree);
 
 				setState({
 					status: 'scanning',
@@ -126,8 +107,10 @@ export default function Scan({options: opts}: Props) {
 					nextScanTreeIndex: result.nextScanTreeIndex,
 					nextScanStartIndex: result.nextScanStartIndex,
 				});
+				exit();
 			} catch (err: unknown) {
 				setState({status: 'error', message: formatFetchUtxosError(err)});
+				exit();
 			}
 		}
 
@@ -184,4 +167,57 @@ export default function Scan({options: opts}: Props) {
 			</Box>
 		</Box>
 	);
+}
+
+export class ScanCommand extends Command {
+	static override description =
+		'Scan the chain for unspent stealth UTXOs';
+
+	static override flags = {
+		tree: bigintFlag({
+			description: 'First Merkle tree index to scan (default: 0)',
+			required: false,
+		}),
+		endTree: bigintFlag({
+			description:
+				'Last Merkle tree index to scan, inclusive (default: same as --tree)',
+			required: false,
+		}),
+		allTrees: Flags.boolean({
+			description: 'Scan all trees from --tree until no more are found',
+			default: false,
+		}),
+		start: bigintFlag({
+			description:
+				'Start insertion index in the first tree, inclusive (default: 0)',
+			required: false,
+		}),
+		end: bigintFlag({
+			description:
+				'End insertion index within each tree, inclusive (default: end of tree)',
+			required: false,
+		}),
+		pageSize: bigintFlag({
+			description:
+				'Number of insertion indices to cover per request (default: entire range)',
+			required: false,
+		}),
+	};
+
+	async run() {
+		const {flags} = await this.parse(ScanCommand);
+		const {waitUntilExit} = render(
+			<Scan
+				options={{
+					tree: flags.tree,
+					endTree: flags.endTree,
+					allTrees: flags.allTrees,
+					start: flags.start,
+					end: flags.end,
+					pageSize: flags.pageSize,
+				}}
+			/>,
+		);
+		await waitUntilExit();
+	}
 }
