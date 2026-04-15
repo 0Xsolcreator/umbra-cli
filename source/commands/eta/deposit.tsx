@@ -1,30 +1,19 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Text} from 'ink';
-import zod from 'zod';
+import {Box, Text, useApp, render} from 'ink';
+import {Args, Command, Flags} from '@oclif/core';
 import {getPublicBalanceToEncryptedBalanceDirectDepositorFunction} from '@umbra-privacy/sdk';
+import {address} from '@solana/kit';
+import {type U64} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
-import {address} from '@solana/kit';
-import {U64} from '@umbra-privacy/sdk/types';
+import {bigintArg} from '../../lib/flags.js';
 import {Spinner, ErrorMessage} from '../../components/index.js';
 import {formatDepositError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
 
-export const args = zod.tuple([
-	zod.string().describe('mint'),
-	zod.coerce.bigint().describe('amount'),
-]);
-
-export const options = zod.object({
-	recipient: zod
-		.string()
-		.optional()
-		.describe('Recipient wallet address (defaults to your own address)'),
-});
-
 type Props = {
-	args: zod.infer<typeof args>;
-	options: zod.infer<typeof options>;
+	args: [string, bigint];
+	options: {recipient?: string};
 };
 
 type State =
@@ -33,6 +22,7 @@ type State =
 	| ErrorState;
 
 export default function Deposit({args: [mint, amount], options: opts}: Props) {
+	const {exit} = useApp();
 	const [state, setState] = useState<State>({
 		status: 'depositing',
 		stepLabel: 'Preparing deposit...',
@@ -61,8 +51,10 @@ export default function Deposit({args: [mint, amount], options: opts}: Props) {
 					queueSignature: result.queueSignature,
 					callbackSignature: result.callbackSignature,
 				});
+				exit();
 			} catch (err: unknown) {
 				setState({status: 'error', message: formatDepositError(err)});
+				exit();
 			}
 		}
 
@@ -84,4 +76,33 @@ export default function Deposit({args: [mint, amount], options: opts}: Props) {
 			</Box>
 		</Box>
 	);
+}
+
+export class DepositCommand extends Command {
+	static override description =
+		'Move tokens from your public wallet into an encrypted ETA';
+
+	static override args = {
+		mint: Args.string({description: 'Mint address', required: true}),
+		amount: bigintArg({description: 'Amount in base units', required: true}),
+	};
+
+	static override flags = {
+		recipient: Flags.string({
+			description:
+				'Recipient wallet address (defaults to your own address)',
+			required: false,
+		}),
+	};
+
+	async run() {
+		const {args, flags} = await this.parse(DepositCommand);
+		const {waitUntilExit} = render(
+			<Deposit
+				args={[args.mint, args.amount]}
+				options={{recipient: flags.recipient}}
+			/>,
+		);
+		await waitUntilExit();
+	}
 }
