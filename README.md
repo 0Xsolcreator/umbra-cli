@@ -91,13 +91,14 @@ bun test tests/ # prettier + xo + bun test
 
 ## Project structure
 
-The CLI is built with [Pastel](https://github.com/vadimdemedes/pastel), which uses file-based routing — the directory structure under `source/commands/` maps directly to CLI subcommands, similar to how Next.js handles pages. Each `.tsx` file is a self-contained command rendered with [Ink](https://github.com/vadimdemedes/ink) (React for the terminal).
+The CLI is built with [Oclif](https://oclif.io) for command routing and [Ink](https://github.com/vadimdemedes/ink) (React for the terminal) for rendering. Each command file exports an Ink component (the UI) and an Oclif `Command` class (the routing and flag parsing). Commands are explicitly registered in `source/commands.ts`.
 
 ```
 source/
-├── cli.tsx                  # Entry point — bootstraps Pastel
+├── cli.tsx                  # Entry point — bootstraps Oclif
+├── commands.ts              # Explicit command registry (maps IDs to Command classes)
+├── help.ts                  # Custom Help class — renders the ASCII logo on `umbra`
 ├── commands/
-│   ├── index.tsx            # umbra (root help)
 │   ├── init.tsx             # umbra init
 │   ├── register.tsx         # umbra register
 │   ├── eta/
@@ -113,10 +114,10 @@ source/
 └── lib/
     ├── config.ts            # Read/write ~/.umbra-cli/config.json
     ├── errors.ts            # Error formatting per command
+    ├── flags.ts             # Custom Oclif flag/arg factories (bigintFlag, bigintArg)
     ├── format.ts            # Display helpers
     ├── paths.ts             # File path constants
     ├── constants.ts         # Network defaults and RPC endpoints
-    ├── commands.ts          # Shared command logic
     └── umbra/               # Thin wrappers around @umbra-privacy/sdk
         ├── client.ts        # IUmbraClient creation and storage
         ├── signer.ts        # IUmbraSigner from a keypair file
@@ -128,7 +129,9 @@ tests/
                              # ⚠️ Current tests are AI-generated — proper test coverage is in progress
 ```
 
-To add a new command, create a `.tsx` file in the appropriate `source/commands/` subfolder — Pastel picks it up automatically.
+To add a new command:
+1. Create a `.tsx` file in the appropriate `source/commands/` subfolder with a default-exported Ink component and a named-exported `Command` class.
+2. Register it in `source/commands.ts` with its command ID (e.g. `'eta:mycommand'`).
 
 ---
 

@@ -16,11 +16,11 @@ Use this to check what's available before running `utxo claim`. The scan does no
 | Flag | Default | Description |
 |---|---|---|
 | `--tree <n>` | `0` | First Merkle tree index to scan |
-| `--end-tree <n>` | Same as `--tree` | Last Merkle tree index to scan (inclusive) |
-| `--all-trees` | `false` | Scan all trees starting from `--tree` until no more are found |
+| `--endTree <n>` | Same as `--tree` | Last Merkle tree index to scan (inclusive) |
+| `--allTrees` | `false` | Scan all trees starting from `--tree` until no more are found |
 | `--start <n>` | `0` | Start insertion index within the first tree (inclusive) |
 | `--end <n>` | End of tree | End insertion index within each tree (inclusive) |
-| `--page-size <n>` | Entire range | Insertion indices to cover per indexer request |
+| `--pageSize <n>` | Entire range | Insertion indices to cover per indexer request |
 
 ## Examples
 
@@ -29,16 +29,16 @@ Use this to check what's available before running `utxo claim`. The scan does no
 umbra utxo scan
 
 # Scan trees 0 through 3
-umbra utxo scan --tree 0 --end-tree 3
+umbra utxo scan --tree 0 --endTree 3
 
 # Scan all trees
-umbra utxo scan --all-trees
+umbra utxo scan --allTrees
 
 # Continue from a previous scan
 umbra utxo scan --tree 2 --start 1500
 
 # Paginated scan for large trees
-umbra utxo scan --tree 0 --page-size 500
+umbra utxo scan --tree 0 --pageSize 500
 ```
 
 ## Output
@@ -64,5 +64,5 @@ The `Next scan start` values tell you where to resume the next scan to avoid re-
 
 ## Prerequisites
 
-- `umbra init` with `--indexer-endpoint` configured.
+- `umbra init` with `--indexerEndpoint` configured.
 - `umbra register` must have been run.
