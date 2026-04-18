@@ -1,0 +1,37 @@
+---
+title: user list
+description: List all configured users and their signer backends.
+---
+
+```bash
+umbra user list
+```
+
+Prints a table of every user registered in the CLI, showing their name, backend, and derived wallet address. The active user is marked with `*`.
+
+## Output
+
+```
+  NAME   BACKEND  ADDRESS
+* alice  local    GsbwXfJraMomNxBcpR3DBFyKCCmN9SKGzKFJBNKxRFkT
+  bob    privy    5KtPso3AT6W8GeZs7...
+```
+
+If no users are configured:
+
+```
+No users configured.
+Add one with: umbra user add <name> --backend <backend>
+```
+
+If no active user is selected:
+
+```
+No active user. Select one with: umbra user use <name>
+```
+
+## See also
+
+- [`user add`](/commands/user/add) — add a new user
+- [`user use`](/commands/user/use) — change the active user
+- [`user remove`](/commands/user/remove) — remove a user

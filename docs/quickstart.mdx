@@ -11,21 +11,37 @@ description: Get from zero to your first private transfer in minutes.
 npm install --global umbraprivacy-cli
 ```
 
-## Step 1 — Initialize
+## Step 1 — Add a user
 
-Link your Solana keypair and choose a network. This saves a config file at `~/.umbra-cli/config.json`.
-
-```bash
-umbra init
-```
-
-The CLI defaults to your Solana keypair at `~/.config/solana/id.json` and connects to `devnet`. Pass flags to override:
+Link a signer to the CLI. The simplest option is a local Solana keypair file (the same format used by `solana-keygen`).
 
 ```bash
-umbra init --network mainnet --keypair ~/my-wallet.json
+umbra user add alice --backend local
 ```
 
-## Step 2 — Register
+The CLI defaults to `~/.config/solana/id.json`. Pass `--param keypair=<path>` to use a different file:
+
+```bash
+umbra user add alice --backend local --param keypair=~/wallets/my-wallet.json
+```
+
+For managed wallet providers (Privy, Turnkey, Para), see [`user add`](/commands/user/add) for the required params.
+
+The first user you add is automatically set as the active user. To switch later, run `umbra user use <name>`.
+
+## Step 2 — Configure the network
+
+By default the CLI connects to `devnet`. To switch to mainnet:
+
+```bash
+umbra config set network mainnet
+umbra config set rpcUrl https://api.mainnet-beta.solana.com
+umbra config set rpcSubscriptionsUrl wss://api.mainnet-beta.solana.com
+```
+
+Run `umbra config get` at any time to see current settings.
+
+## Step 3 — Register
 
 Create your on-chain Umbra account. This publishes your encryption key and user commitment to the Solana network, enabling both encrypted balances and the mixer.
 
@@ -39,7 +55,7 @@ Registration is a one-time step per wallet. It performs up to three on-chain tra
 Your wallet will prompt you to sign a message during registration. This signature derives your master seed — the root of Umbra's key hierarchy. It is not a transaction and costs no SOL.
 </Note>
 
-## Step 3 — Deposit
+## Step 4 — Deposit
 
 Move tokens from your public wallet into an encrypted balance. Amounts are in native token units (accounting for decimals).
 
@@ -50,7 +66,7 @@ umbra eta deposit EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100000000
 
 The command waits for the Arcium MPC callback to confirm before returning. You'll see two transaction signatures: the queue tx and the callback tx.
 
-## Step 4 — Check your balance
+## Step 5 — Check your balance
 
 ```bash
 umbra eta balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
@@ -62,7 +78,7 @@ Pass multiple mints to check several at once:
 umbra eta balance <mint1> <mint2> <mint3>
 ```
 
-## Step 5 — Withdraw
+## Step 6 — Withdraw
 
 Move tokens back to your public wallet:
 

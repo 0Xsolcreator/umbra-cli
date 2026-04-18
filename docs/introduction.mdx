@@ -35,8 +35,13 @@ umbra utxo claim
 
 | Command | Description |
 |---|---|
-| `umbra init` | Link your keypair and configure the CLI |
-| `umbra register` | Publish your on-chain user account |
+| `umbra user add <name> --backend <backend>` | Add a signer user (local keypair or managed wallet) |
+| `umbra user list` | List configured users |
+| `umbra user use <name>` | Set the active user for all commands |
+| `umbra user remove <name>` | Remove a user and its stored credentials |
+| `umbra config set <key> <value>` | Set a CLI-wide config value |
+| `umbra config get [key]` | Print one or all config values |
+| `umbra register` | Publish your on-chain Umbra user account |
 | `umbra eta deposit` | Move tokens from your public wallet into an encrypted balance |
 | `umbra eta balance` | Check your encrypted token balances |
 | `umbra eta withdraw` | Move tokens from your encrypted balance back to a public wallet |
@@ -46,6 +51,12 @@ umbra utxo claim
 
 ## Before you start
 
-You need a Solana keypair file on disk. The CLI defaults to `~/.config/solana/id.json` — the standard location used by the Solana CLI. Run `solana-keygen new` if you don't have one yet.
+Add a user before running any other command:
 
-All commands require the CLI to be initialized first. Run `umbra init` once to link your keypair and set your network. Then run `umbra register` to create your on-chain Umbra account.
+```bash
+umbra user add <name> --backend local
+```
+
+This links a signer to the CLI and sets it as the active user. Then run `umbra register` once to create your on-chain Umbra account.
+
+All network settings (`rpcUrl`, `network`, `indexerApiEndpoint`, etc.) can be configured with `umbra config set`. Run `umbra config get` to see current values.

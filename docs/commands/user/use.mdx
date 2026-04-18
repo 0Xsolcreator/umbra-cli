@@ -1,0 +1,34 @@
+---
+title: user use
+description: Set the active user for all subsequent commands.
+---
+
+```bash
+umbra user use <name>
+```
+
+Marks a previously added user as the active user. All commands that submit transactions (register, eta deposit, utxo create, etc.) use the active user's signer and wallet address.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<name>` | Name of the user to activate. Must have been added with `user add`. |
+
+## Output
+
+```
+✓ Active user: alice (local, GsbwXfJraMomNxBcpR3DBFyKCCmN9SKGzKFJBNKxRFkT)
+```
+
+## Examples
+
+```bash
+umbra user use alice
+umbra user use bob
+```
+
+## See also
+
+- [`user add`](/commands/user/add) — add a new user
+- [`user list`](/commands/user/list) — see all users and which is active

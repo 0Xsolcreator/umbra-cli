@@ -1,10 +1,54 @@
 /** Config */
 export {
 	type CliConfig,
-	ConfigNotFoundError,
+	type ConfigKey,
+	CONFIG_KEYS,
+	NoActiveUserError,
+	isConfigKey,
+	parseConfigValue,
 	readConfig,
+	updateConfig,
 	writeConfig,
 } from './config.js';
+
+/** Users */
+export {
+	type UserRecord,
+	UserAlreadyExistsError,
+	UserNotFoundError,
+	listUsers,
+	readUser,
+	removeUser,
+	userExists,
+	writeUser,
+} from './users.js';
+
+/** Backend registry */
+export {
+	type BackendDefinition,
+	type BackendEnvSecret,
+	type BackendName,
+	type BackendParam,
+	type BuildSignerContext,
+	BACKEND_NAMES,
+	buildSigner,
+	getBackend,
+	isBackendName,
+	listBackends,
+	parseParamFlags,
+	validateParams,
+} from './backends/index.js';
+
+/** Per-user secrets (OS keychain, env-var overridable) */
+export {
+	deleteSecret,
+	getSecret,
+	isKeychainAvailable,
+	setSecret,
+} from './secrets.js';
+
+/** Interactive prompt helpers */
+export {promptSecret} from './prompt.js';
 
 /** Umbra SDK client and primitives */
 export {getClient, setClient} from './umbra/client.js';
@@ -19,7 +63,7 @@ export type {
 	MultiTreeScanProgress,
 	MultiTreeScanResult,
 } from './umbra/scanner.js';
-export {createSignerFromKeypairFile} from './umbra/signer.js';
+export {createUmbraSignerFromSolanaSigner} from './umbra/signer.js';
 
 /** Error formatting */
 export {

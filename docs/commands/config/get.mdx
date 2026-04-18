@@ -1,0 +1,59 @@
+---
+title: config get
+description: Print one or all CLI configuration values.
+---
+
+```bash
+umbra config get [key]
+```
+
+Prints the current value of a config key. When called without a key, prints all keys and their current values, plus the path to the config file.
+
+## Arguments
+
+| Argument | Required | Description |
+|---|---|---|
+| `[key]` | No | Config key to read. Omit to print all values. |
+
+## Config keys
+
+| Key | Default | Description |
+|---|---|---|
+| `network` | `devnet` | Solana network: `mainnet`, `devnet`, or `localnet` |
+| `rpcUrl` | `https://api.devnet.solana.com` | HTTP RPC endpoint |
+| `rpcSubscriptionsUrl` | `wss://api.devnet.solana.com` | WebSocket RPC endpoint |
+| `indexerApiEndpoint` | *(unset)* | Umbra indexer API base URL (required for UTXO commands) |
+| `deferMasterSeedSignature` | `false` | Delay the master seed signing prompt until first use |
+| `activeUser` | *(unset)* | Name of the currently active user |
+
+## Examples
+
+```bash
+# Print all config values
+umbra config get
+
+# Print a single value
+umbra config get network
+umbra config get rpcUrl
+umbra config get activeUser
+```
+
+## Output
+
+```
+# umbra config get (all values)
+Config file: /home/user/.umbra-cli/config.json
+network: devnet
+rpcUrl: https://api.devnet.solana.com
+rpcSubscriptionsUrl: wss://api.devnet.solana.com
+indexerApiEndpoint: (unset)
+deferMasterSeedSignature: false
+activeUser: alice
+
+# umbra config get network
+devnet
+```
+
+## See also
+
+- [`config set`](/commands/config/set) — update a config value

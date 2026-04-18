@@ -38,8 +38,23 @@
 			{
 				"group": "Commands",
 				"pages": [
-					"commands/init",
 					"commands/register",
+					{
+						"group": "user",
+						"pages": [
+							"commands/user/add",
+							"commands/user/list",
+							"commands/user/use",
+							"commands/user/remove"
+						]
+					},
+					{
+						"group": "config",
+						"pages": [
+							"commands/config/get",
+							"commands/config/set"
+						]
+					},
 					{
 						"group": "eta",
 						"pages": [

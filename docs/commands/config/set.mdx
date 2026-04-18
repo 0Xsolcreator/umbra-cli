@@ -1,0 +1,48 @@
+---
+title: config set
+description: Set a CLI-wide configuration value.
+---
+
+```bash
+umbra config set <key> <value>
+```
+
+Writes a single key-value pair to `~/.umbra-cli/config.json`. The file is created if it doesn't exist. All other keys are preserved.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<key>` | Config key to set. See table below. |
+| `<value>` | Value to assign. |
+
+## Config keys
+
+| Key | Accepted values | Description |
+|---|---|---|
+| `network` | `mainnet`, `devnet`, `localnet` | Solana network to connect to |
+| `rpcUrl` | Any URL | HTTP RPC endpoint |
+| `rpcSubscriptionsUrl` | Any URL | WebSocket RPC endpoint |
+| `indexerApiEndpoint` | Any URL | Umbra indexer API base URL (required for UTXO commands) |
+| `deferMasterSeedSignature` | `true`, `false` | Delay the master seed signing prompt until first use |
+| `activeUser` | Any user name | Active user (prefer `user use` for this) |
+
+## Examples
+
+```bash
+umbra config set network mainnet
+umbra config set rpcUrl https://rpc.helius.xyz/?api-key=YOUR_KEY
+umbra config set rpcSubscriptionsUrl wss://rpc.helius.xyz/?api-key=YOUR_KEY
+umbra config set indexerApiEndpoint https://indexer.api.umbraprivacy.com
+umbra config set deferMasterSeedSignature true
+```
+
+## Output
+
+```
+✓ network = mainnet
+```
+
+## See also
+
+- [`config get`](/commands/config/get) — read current config values

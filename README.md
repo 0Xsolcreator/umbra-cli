@@ -27,8 +27,8 @@ solana-keygen new
 ## Quickstart
 
 ```bash
-# 1. Link your keypair and set your network
-umbra init
+# 1. Add a signer user (links your keypair to the CLI)
+umbra user add alice --backend local
 
 # 2. Create your on-chain Umbra identity (one-time)
 umbra register
@@ -48,14 +48,19 @@ umbra eta balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 
 | Command | Description |
 |---|---|
-| `umbra init` | Link your keypair and configure the CLI |
+| `umbra user add <name> --backend <backend>` | Add a signer user (local keypair or managed wallet) |
+| `umbra user list` | List configured users |
+| `umbra user use <name>` | Set the active user for all commands |
+| `umbra user remove <name>` | Remove a user and its stored credentials |
+| `umbra config set <key> <value>` | Set a CLI-wide config value |
+| `umbra config get [key]` | Print one or all config values |
 | `umbra register` | Publish your on-chain Umbra user account |
 | `umbra eta deposit <mint> <amount>` | Move tokens into your encrypted balance |
 | `umbra eta balance <mint...>` | Decrypt and display your encrypted balances |
 | `umbra eta withdraw <mint> <amount>` | Move tokens from your encrypted balance back to your wallet |
 | `umbra utxo create <mint> <amount>` | Create an anonymous stealth UTXO in the mixer |
 | `umbra utxo scan` | Scan the chain for UTXOs belonging to you |
-| `umbra utxo claim` | Scan and claim all found UTXOs *(currently unavailable)* |
+| `umbra utxo claim` | Scan and claim all found UTXOs |
 
 For full option details, see the **[docs](https://umbra.0xcreator.dev)**.
 
@@ -99,8 +104,15 @@ source/
 ├── commands.ts              # Explicit command registry (maps IDs to Command classes)
 ├── help.ts                  # Custom Help class — renders the ASCII logo on `umbra`
 ├── commands/
-│   ├── init.tsx             # umbra init
 │   ├── register.tsx         # umbra register
+│   ├── user/
+│   │   ├── add.tsx          # umbra user add
+│   │   ├── list.tsx         # umbra user list
+│   │   ├── use.tsx          # umbra user use
+│   │   └── remove.tsx       # umbra user remove
+│   ├── config/
+│   │   ├── get.tsx          # umbra config get
+│   │   └── set.tsx          # umbra config set
 │   ├── eta/
 │   │   ├── deposit.tsx      # umbra eta deposit
 │   │   ├── balance.tsx      # umbra eta balance
@@ -112,7 +124,10 @@ source/
 ├── components/
 │   └── index.tsx            # Shared Ink components (Spinner, ErrorMessage, Row, UtxoGroup)
 └── lib/
+    ├── backends/            # Signer backend registry (local, privy, turnkey, para)
     ├── config.ts            # Read/write ~/.umbra-cli/config.json
+    ├── users.ts             # Read/write ~/.umbra-cli/users/<name>.json
+    ├── secrets.ts           # OS keychain read/write
     ├── errors.ts            # Error formatting per command
     ├── flags.ts             # Custom Oclif flag/arg factories (bigintFlag, bigintArg)
     ├── format.ts            # Display helpers

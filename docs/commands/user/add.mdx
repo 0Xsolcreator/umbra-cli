@@ -1,0 +1,151 @@
+---
+title: user add
+description: Add a signer user backed by a local keypair or a managed wallet provider.
+---
+
+```bash
+umbra user add <name> --backend <backend> [options]
+```
+
+Registers a named user in the CLI. Each user bundles an identity (name), a signer backend, and the wallet address derived from that backend. All commands that submit transactions use the active user's signer.
+
+If no active user is set when you add the first user, it is automatically activated.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<name>` | Identifier for this user. Letters, digits, `-`, and `_` only. |
+
+## Flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--backend <type>` | — | Signer backend. One of: `local`, `privy`, `turnkey`, `para` |
+| `--param <key=value>` | `[]` | Backend parameter (repeat for multiple). See backend details below. |
+| `--secret <KEY=value>` | `[]` | Backend secret as `ENV_KEY=value`. Saved to the OS keychain. Omit to be prompted interactively. |
+| `--activate` | `false` | Set this user as the active user after adding. |
+
+## Backends
+
+### `local` — Local keypair file
+
+Reads a Solana keypair from a JSON file on disk (same format as `solana-keygen`).
+
+| Param | Required | Description |
+|---|---|---|
+| `keypair` | No | Path to keypair JSON file. Default: `~/.config/solana/id.json` |
+
+```bash
+# Use the default keypair location
+umbra user add alice --backend local
+
+# Explicit keypair path
+umbra user add alice --backend local --param keypair=/path/to/id.json
+```
+
+---
+
+### `privy` — Privy managed wallet
+
+Signs via the [Privy](https://privy.io) server-side wallet API.
+
+| Param | Required | Description |
+|---|---|---|
+| `appId` | Yes | Privy application ID |
+| `walletId` | Yes | Privy wallet ID |
+| `apiBaseUrl` | No | Custom Privy API base URL (default: `https://api.privy.io/v1`) |
+
+| Secret | Description |
+|---|---|
+| `PRIVY_APP_SECRET` | Privy application secret |
+
+```bash
+umbra user add alice \
+  --backend privy \
+  --param appId=<appId> \
+  --param walletId=<walletId>
+  # prompts for PRIVY_APP_SECRET interactively
+
+# Pass the secret directly (saved to keychain)
+umbra user add alice \
+  --backend privy \
+  --param appId=<appId> \
+  --param walletId=<walletId> \
+  --secret PRIVY_APP_SECRET=<secret>
+```
+
+---
+
+### `turnkey` — Turnkey managed wallet
+
+Signs via the [Turnkey](https://turnkey.com) API using a P256 API key pair.
+
+| Param | Required | Description |
+|---|---|---|
+| `apiPublicKey` | Yes | Turnkey API public key (hex-encoded) |
+| `organizationId` | Yes | Turnkey organization ID |
+| `privateKeyId` | Yes | Turnkey private key ID used for signing |
+| `publicKey` | Yes | Solana public key (base58) corresponding to the Turnkey private key |
+| `apiBaseUrl` | No | Custom Turnkey API base URL (default: `https://api.turnkey.com`) |
+
+| Secret | Description |
+|---|---|
+| `TURNKEY_API_PRIVATE_KEY` | Turnkey API private key (hex-encoded, P256) |
+
+```bash
+umbra user add alice \
+  --backend turnkey \
+  --param apiPublicKey=<hex> \
+  --param organizationId=<orgId> \
+  --param privateKeyId=<keyId> \
+  --param publicKey=<base58> \
+  --secret TURNKEY_API_PRIVATE_KEY=<hex>
+```
+
+---
+
+### `para` — Para managed wallet
+
+Signs via the [Para](https://getpara.com) server-side wallet API.
+
+| Param | Required | Description |
+|---|---|---|
+| `walletId` | Yes | Para wallet UUID |
+| `apiBaseUrl` | No | Custom Para API base URL (default: `https://api.beta.getpara.com`) |
+
+| Secret | Description |
+|---|---|
+| `PARA_API_KEY` | Para API key (server-side only) |
+
+```bash
+umbra user add alice \
+  --backend para \
+  --param walletId=<uuid> \
+  --secret PARA_API_KEY=<key>
+```
+
+---
+
+## Secrets and the OS keychain
+
+Secrets passed via `--secret` or entered interactively are saved to the OS keychain (macOS Keychain, GNOME Keyring, etc.) scoped to the user name. On subsequent runs, the CLI reads them back automatically — no environment variable needed.
+
+If the keychain is unavailable (e.g. headless Linux without a keyring daemon), the CLI falls back to the current process environment and prints a warning:
+
+```
+⚠ Could not save the following to the OS keychain:
+  - PRIVY_APP_SECRET
+Export these as environment variables before running other commands.
+```
+
+In that case, export the variable in your shell before using commands that need it.
+
+## Output
+
+```
+✓ User "alice" added
+  Backend  local
+  Address  GsbwXfJraMomNxBcpR3DBFyKCCmN9SKGzKFJBNKxRFkT
+  Active   yes
+```

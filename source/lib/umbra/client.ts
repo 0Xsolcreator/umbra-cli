@@ -4,14 +4,21 @@ import {
 	getUmbraClient,
 } from '@umbra-privacy/sdk';
 
-import {ConfigNotFoundError, readConfig} from '../config.js';
+import {buildSigner, isBackendName} from '../backends/index.js';
+import {NoActiveUserError, readConfig} from '../config.js';
+import {readUser} from '../users.js';
 import {createFileSeedStorage} from './seed-storage.js';
-import {createSignerFromKeypairFile} from './signer.js';
+import {createUmbraSignerFromSolanaSigner} from './signer.js';
 
 type UmbraClient = Awaited<ReturnType<typeof getUmbraClient>>;
 
 let _client: UmbraClient | undefined;
 
+/**
+ * Eagerly install a pre-built client. Mainly for tests and commands that
+ * need to wire up a non-default signer (e.g. an ephemeral keypair) — the
+ * normal path is `getClient()` which builds from the on-disk config.
+ */
 export async function setClient(
 	args: GetUmbraClientArgs,
 	deps?: GetUmbraClientDeps,
@@ -19,21 +26,40 @@ export async function setClient(
 	_client = await getUmbraClient(args, deps);
 }
 
+/**
+ * Build (or return the cached) Umbra client for the currently-active user.
+ *
+ * Reads `~/.umbra-cli/config.json` for network settings and the active
+ * user name, then loads `~/.umbra-cli/users/<name>.json` to discover the
+ * backend + params. The backend registry constructs a `SolanaSigner`,
+ * which we wrap in an `IUmbraSigner` adapter for the SDK.
+ *
+ * Throws `NoActiveUserError` when no user has been selected yet — the
+ * commands that depend on a client surface this with instructions to run
+ * `umbra user add` / `umbra user use`.
+ */
 export async function getClient(): Promise<UmbraClient> {
 	if (_client) return _client;
 
-	let config;
-	try {
-		config = await readConfig();
-	} catch (err: unknown) {
-		if (err instanceof ConfigNotFoundError) {
-			throw new Error("Umbra client not initialized. Run 'umbra init' first.");
-		}
+	const config = await readConfig();
 
-		throw err;
+	if (!config.activeUser) {
+		throw new NoActiveUserError();
 	}
 
-	const signer = await createSignerFromKeypairFile(config.walletPath);
+	const user = await readUser(config.activeUser);
+
+	if (!isBackendName(user.backend)) {
+		throw new Error(
+			`User "${user.name}" is configured with unsupported backend "${user.backend}". ` +
+				`Remove and re-add the user with a currently supported backend.`,
+		);
+	}
+
+	const solanaSigner = await buildSigner(user.backend, user.params, {
+		userName: user.name,
+	});
+	const signer = createUmbraSignerFromSolanaSigner(solanaSigner);
 
 	await setClient(
 		{
@@ -44,7 +70,7 @@ export async function getClient(): Promise<UmbraClient> {
 			indexerApiEndpoint: config.indexerApiEndpoint,
 			deferMasterSeedSignature: config.deferMasterSeedSignature,
 		},
-		{masterSeedStorage: createFileSeedStorage()},
+		{masterSeedStorage: createFileSeedStorage(user.name)},
 	);
 
 	return _client!;

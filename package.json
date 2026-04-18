@@ -22,12 +22,18 @@
 	"dependencies": {
 		"@oclif/core": "^4.10.5",
 		"@oclif/plugin-help": "^6.2.44",
+		"@solana/keychain-core": "^1.1.0",
+		"@solana/keychain-para": "^1.1.0",
+		"@solana/keychain-privy": "^1.1.0",
+		"@solana/keychain-turnkey": "^1.1.0",
 		"@solana/kit": "^6.7.0",
 		"@umbra-privacy/sdk": "^4.0.0",
 		"@umbra-privacy/web-zk-prover": "^2.0.1",
 		"ink": "^4.1.0",
 		"ink-spinner": "^5.0.0",
+		"keytar": "^7.9.0",
 		"react": "^18.2.0",
+		"snarkjs": "^0.7.6",
 		"zod": "^3.21.4"
 	},
 	"devDependencies": {
@@ -67,7 +73,9 @@
 			"strategy": "explicit",
 			"target": "./dist/commands.js"
 		},
-		"plugins": ["@oclif/plugin-help"],
+		"plugins": [
+			"@oclif/plugin-help"
+		],
 		"topicSeparator": " ",
 		"helpClass": "./dist/help.js",
 		"theme": {
@@ -80,8 +88,12 @@
 			"bin": "cyan"
 		},
 		"topics": {
-			"eta": {"description": "Encrypted token account (ETA) commands"},
-			"utxo": {"description": "Stealth UTXO commands"}
+			"eta": {
+				"description": "Encrypted token account (ETA) commands"
+			},
+			"utxo": {
+				"description": "Stealth UTXO commands"
+			}
 		}
 	}
 }

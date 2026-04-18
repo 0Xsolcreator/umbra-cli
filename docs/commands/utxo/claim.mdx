@@ -7,10 +7,6 @@ description: Scan for and claim all unspent stealth UTXOs belonging to you.
 umbra utxo claim [options]
 ```
 
-<Warning>
-**Claim is currently unavailable.** There is a known issue with signature verification that causes claim transactions to fail. This will be fixed in an upcoming release.
-</Warning>
-
 Scans for claimable UTXOs and claims them in a single step. Internally it runs the same scan as `utxo scan`, then generates ZK proofs and submits claim transactions for every UTXO it finds.
 
 Claimed UTXOs are deposited into your encrypted balance by default. Pass `--to public` to claim self-claimable UTXOs to your public ATA instead.
@@ -63,6 +59,6 @@ Each batch corresponds to a group of UTXOs processed together. The transaction s
 
 ## Prerequisites
 
-- `umbra init` with `--indexerEndpoint` configured.
+- A user must be added and active (`umbra user add`), and `indexerApiEndpoint` must be set (`umbra config set indexerApiEndpoint <url>`).
 - `umbra register` must have been run (both `--confidential` and `--anonymous` for full support).
 - For `--to public`: the destination ATA must already exist for each claimed mint.

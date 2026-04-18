@@ -1,0 +1,56 @@
+---
+title: user remove
+description: Remove a user and optionally delete its master seed and keychain secrets.
+---
+
+```bash
+umbra user remove <name> [options]
+```
+
+Deletes the named user record from the CLI. By default it also removes the user's master seed file (`~/.umbra-cli/seeds/<name>.json`) and any secrets stored in the OS keychain for that user.
+
+If the removed user was the active user, the active-user pointer is cleared. You will need to run `user use` to activate another user before running commands that require a signer.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<name>` | Name of the user to remove |
+
+## Flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--keep-seed` | `false` | Skip deleting the master seed file; only remove the user record |
+| `--keep-secrets` | `false` | Skip deleting the user's secrets from the OS keychain |
+
+## Examples
+
+```bash
+# Remove a user and clean up all associated data (default)
+umbra user remove alice
+
+# Remove the record but keep the seed file (useful for re-adding the user later)
+umbra user remove alice --keep-seed
+
+# Remove the record but keep keychain secrets
+umbra user remove alice --keep-secrets
+```
+
+## Output
+
+```
+✓ User "alice" removed. No active user set.
+  Deleted master seed file.
+  Deleted keychain secrets: PRIVY_APP_SECRET.
+```
+
+If the removed user was not active:
+
+```
+✓ User "alice" removed.
+```
+
+<Warning>
+Removing a user with its master seed is irreversible. The seed is the root of Umbra's key hierarchy — without it, you cannot decrypt encrypted balances or claim UTXOs for that user. Back it up before removing if you intend to re-use the account.
+</Warning>
