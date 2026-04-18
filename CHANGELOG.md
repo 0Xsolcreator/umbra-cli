@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/0Xsolcreator/umbra-cli/compare/v0.1.5...v0.2.0) (2026-04-18)
+
+
+### Features
+
+* :boom: imp solana-keychain for key management ([e7599cc](https://github.com/0Xsolcreator/umbra-cli/commit/e7599cc567be46c84bb4817e98dfa95c05534c30))
+
 ## [0.1.5](https://github.com/0Xsolcreator/umbra-cli/compare/v0.1.4...v0.1.5) (2026-04-13)
 
 
