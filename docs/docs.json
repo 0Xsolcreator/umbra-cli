@@ -72,6 +72,10 @@
 						]
 					}
 				]
+			},
+			{
+				"group": "Changelog",
+				"pages": ["changelog/v0.2.0"]
 			}
 		]
 	}

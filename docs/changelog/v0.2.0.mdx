@@ -1,0 +1,54 @@
+---
+title: v0.2.0
+description: Multi-user key management, managed wallet providers, and a rebuilt command layer.
+---
+
+<Info>
+Released April 18, 2026
+</Info>
+
+## New features
+
+### Multi-user key management
+
+You can now add multiple named users to the CLI — each backed by a different signer — and switch between them on the fly:
+
+```bash
+umbra user add alice --backend local
+umbra user add bob --backend privy --param appId=<id> --param walletId=<id>
+umbra user use bob
+```
+
+The first user you add is automatically set as the active user. See [`user add`](/commands/user/add), [`user list`](/commands/user/list), [`user use`](/commands/user/use), and [`user remove`](/commands/user/remove) for details.
+
+### Managed wallet providers
+
+In addition to local keypair files, you can now sign transactions through managed wallet services:
+
+- **Privy** — server-side wallet API
+- **Turnkey** — P256 API key signing
+- **Para** — server-side wallet API
+
+Each provider is configured through the `--backend` and `--param` flags on [`user add`](/commands/user/add).
+
+### OS keychain integration
+
+Secrets like API keys are stored in your OS keychain (macOS Keychain, GNOME Keyring, etc.) and loaded automatically on future runs. No need to export environment variables each session.
+
+### Per-user configuration
+
+Use [`config set`](/commands/config/set) and [`config get`](/commands/config/get) to manage CLI-wide settings like `rpcUrl`, `network`, and `indexerApiEndpoint` from the terminal.
+
+## Updates
+
+### Rebuilt command layer
+
+The CLI framework has been rewritten for faster startup, better help output, and more reliable flag parsing. All existing commands (`register`, `eta`, `utxo`) work the same way — no changes to your workflow.
+
+### Improved invalid-command handling
+
+Running an unrecognized command now shows helpful suggestions instead of a generic error.
+
+## Bug fixes
+
+- Fixed an issue where npm publish could fail silently on certain release configurations.
