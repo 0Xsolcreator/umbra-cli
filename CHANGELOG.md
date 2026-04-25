@@ -1,3 +1,5 @@
+## [0.2.1](https://github.com/0Xsolcreator/umbra-cli/compare/v0.2.0...v0.2.1) (2026-04-25)
+
 # [0.2.0](https://github.com/0Xsolcreator/umbra-cli/compare/v0.1.5...v0.2.0) (2026-04-18)
 
 
