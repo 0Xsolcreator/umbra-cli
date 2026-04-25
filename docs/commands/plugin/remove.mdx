@@ -1,0 +1,28 @@
+---
+title: plugin remove
+description: Uninstall a plugin.
+---
+
+```bash
+umbra plugin remove <plugin>
+```
+
+Removes a previously installed plugin. The plugin's commands are no longer available after removal.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<plugin>` | Package name of the plugin to remove. Must match the name used when installing. |
+
+## Examples
+
+```bash
+umbra plugin remove jup-earn
+umbra plugin remove @myorg/umbra-plugin-defi
+```
+
+## See also
+
+- [`plugin add`](/commands/plugin/add) — install a plugin
+- [`plugin list`](/commands/plugin/list) — see installed plugins

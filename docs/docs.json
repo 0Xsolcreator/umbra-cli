@@ -70,6 +70,15 @@
 							"commands/utxo/create",
 							"commands/utxo/claim"
 						]
+					},
+					{
+						"group": "plugin",
+						"pages": [
+							"commands/plugin/add",
+							"commands/plugin/list",
+							"commands/plugin/remove",
+							"commands/plugin/use"
+						]
 					}
 				]
 			},

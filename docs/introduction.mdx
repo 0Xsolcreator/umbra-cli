@@ -9,6 +9,14 @@ This is a community-built CLI and is not an official product of the Umbra team. 
 
 Umbra CLI is a command-line tool for interacting with the Umbra protocol on Solana. It lets you shield tokens into encrypted balances, transfer them anonymously through the mixer, and manage everything from a single terminal command.
 
+## Extend with plugins
+
+The CLI supports plugins — npm packages that add new commands to `umbra`. Install any compatible plugin and its commands are available immediately:
+
+```bash
+umbra plugin add jup-earn
+```
+
 ## Two ways to use Umbra
 
 **Encrypted Token Accounts (ETA)**
@@ -48,6 +56,10 @@ umbra utxo claim
 | `umbra utxo scan` | Scan the chain for unspent stealth UTXOs |
 | `umbra utxo claim` | Claim found UTXOs to your wallet |
 | `umbra utxo create` | Create a new stealth UTXO |
+| `umbra plugin add <name>` | Install a plugin from npm |
+| `umbra plugin list` | List installed plugins |
+| `umbra plugin remove <name>` | Uninstall a plugin |
+| `umbra plugin use <plugin> <name>` | Set the active user for a plugin |
 
 ## Before you start
 

@@ -1,0 +1,38 @@
+---
+title: plugin add
+description: Install a plugin from npm.
+---
+
+```bash
+umbra plugin add <plugin> [--force]
+```
+
+Downloads and installs a plugin package from npm. Plugins extend the CLI with new commands — they are regular npm packages distributed independently.
+
+After installation the plugin's commands are available immediately without restarting the CLI.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<plugin>` | npm package name to install. Scoped packages (`@org/name`) are supported. |
+
+## Flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--force` | `false` | Force reinstall even if the plugin is already present. |
+
+## Examples
+
+```bash
+umbra plugin add jup-earn
+umbra plugin add @myorg/umbra-plugin-defi
+umbra plugin add jup-earn --force
+```
+
+## See also
+
+- [`plugin list`](/commands/plugin/list) — see installed plugins
+- [`plugin remove`](/commands/plugin/remove) — uninstall a plugin
+- [`plugin use`](/commands/plugin/use) — set a wallet override for a plugin

@@ -1,5 +1,9 @@
 import {type Command} from '@oclif/core';
 
+import {PluginAddCommand} from './commands/plugin/add.js';
+import {PluginListCommand} from './commands/plugin/list.js';
+import {PluginRemoveCommand} from './commands/plugin/remove.js';
+import {PluginUseCommand} from './commands/plugin/use.js';
 import {UserAddCommand} from './commands/user/add.js';
 import {UserListCommand} from './commands/user/list.js';
 import {UserUseCommand} from './commands/user/use.js';
@@ -15,6 +19,10 @@ import {ScanCommand} from './commands/utxo/scan.js';
 import {ClaimCommand} from './commands/utxo/claim.js';
 
 const commands: Record<string, Command.Class> = {
+	'plugin:add': PluginAddCommand,
+	'plugin:list': PluginListCommand,
+	'plugin:remove': PluginRemoveCommand,
+	'plugin:use': PluginUseCommand,
 	'user:add': UserAddCommand,
 	'user:list': UserListCommand,
 	'user:use': UserUseCommand,

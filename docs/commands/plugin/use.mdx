@@ -1,0 +1,61 @@
+---
+title: plugin use
+description: Set the active user for a specific plugin.
+---
+
+```bash
+umbra plugin use <plugin> [username] [--global]
+```
+
+Overrides the active user for a single plugin. Useful when you want one plugin to sign with a different wallet than the one set globally.
+
+The override is stored in `~/.umbra-cli/plugins/<plugin>.json` and applies every time that plugin runs — no need to set it again each session.
+
+## Resolution order
+
+When a plugin resolves its wallet it checks:
+
+1. The plugin-specific override set by this command (`~/.umbra-cli/plugins/<plugin>.json`)
+2. The global active user from `umbra user use`
+3. Throws an error if neither is set
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<plugin>` | Package name of the installed plugin (e.g. `jup-earn`). |
+| `[username]` | Name of the user to activate for this plugin. Must have been added with `user add`. |
+
+## Flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--global` | `false` | Clear the plugin override and fall back to the global active user. |
+
+## Output
+
+```
+✓ Active user for "jup-earn": alice (local, GsbwXfJraMomNxBcpR3DBFyKCCmN9SKGzKFJBNKxRFkT)
+```
+
+When clearing the override:
+
+```
+✓ Plugin "jup-earn" will use global active user
+```
+
+## Examples
+
+```bash
+# Use alice for jup-earn regardless of global active user
+umbra plugin use jup-earn alice
+
+# Clear the override — jup-earn falls back to the global active user
+umbra plugin use jup-earn --global
+```
+
+## See also
+
+- [`user use`](/commands/user/use) — set the global active user
+- [`user add`](/commands/user/add) — register a user
+- [`plugin add`](/commands/plugin/add) — install a plugin
