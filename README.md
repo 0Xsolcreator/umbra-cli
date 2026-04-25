@@ -61,10 +61,40 @@ umbra eta balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 | `umbra utxo create <mint> <amount>` | Create an anonymous stealth UTXO in the mixer |
 | `umbra utxo scan` | Scan the chain for UTXOs belonging to you |
 | `umbra utxo claim` | Scan and claim all found UTXOs |
+| `umbra plugin add <name>` | Install a plugin from npm |
+| `umbra plugin list` | List installed plugins |
+| `umbra plugin remove <name>` | Uninstall a plugin |
+| `umbra plugin use <plugin> <name>` | Set the active user for a specific plugin |
 
 For full option details, see the **[docs](https://umbra.0xcreator.dev)**.
 
 Run any command with `--help` for a quick reference inline.
+
+---
+
+## Plugins
+
+The CLI supports plugins — npm packages that add new commands to `umbra`. Install any compatible plugin from npm:
+
+```bash
+umbra plugin add jup-earn
+umbra plugin add @myorg/umbra-plugin-defi
+```
+
+Each plugin can be pinned to a different wallet without changing your global active user:
+
+```bash
+umbra plugin use jup-earn alice
+```
+
+**For plugin authors:** the CLI exposes its internals at the `umbra-cli/lib` entry point. Import helpers like `resolvePluginUser`, `getPluginRpc`, and config utilities directly rather than reimplementing them:
+
+```ts
+import { resolvePluginUser, getPluginRpc } from 'umbra-cli/lib';
+
+const user = await resolvePluginUser('my-plugin');
+const { rpc } = await getPluginRpc();
+```
 
 ---
 
@@ -97,52 +127,6 @@ bun test tests/ # prettier + xo + bun test
 ## Project structure
 
 The CLI is built with [Oclif](https://oclif.io) for command routing and [Ink](https://github.com/vadimdemedes/ink) (React for the terminal) for rendering. Each command file exports an Ink component (the UI) and an Oclif `Command` class (the routing and flag parsing). Commands are explicitly registered in `source/commands.ts`.
-
-```
-source/
-├── cli.tsx                  # Entry point — bootstraps Oclif
-├── commands.ts              # Explicit command registry (maps IDs to Command classes)
-├── help.ts                  # Custom Help class — renders the ASCII logo on `umbra`
-├── commands/
-│   ├── register.tsx         # umbra register
-│   ├── user/
-│   │   ├── add.tsx          # umbra user add
-│   │   ├── list.tsx         # umbra user list
-│   │   ├── use.tsx          # umbra user use
-│   │   └── remove.tsx       # umbra user remove
-│   ├── config/
-│   │   ├── get.tsx          # umbra config get
-│   │   └── set.tsx          # umbra config set
-│   ├── eta/
-│   │   ├── deposit.tsx      # umbra eta deposit
-│   │   ├── balance.tsx      # umbra eta balance
-│   │   └── withdraw.tsx     # umbra eta withdraw
-│   └── utxo/
-│       ├── create.tsx       # umbra utxo create
-│       ├── scan.tsx         # umbra utxo scan
-│       └── claim.tsx        # umbra utxo claim
-├── components/
-│   └── index.tsx            # Shared Ink components (Spinner, ErrorMessage, Row, UtxoGroup)
-└── lib/
-    ├── backends/            # Signer backend registry (local, privy, turnkey, para)
-    ├── config.ts            # Read/write ~/.umbra-cli/config.json
-    ├── users.ts             # Read/write ~/.umbra-cli/users/<name>.json
-    ├── secrets.ts           # OS keychain read/write
-    ├── errors.ts            # Error formatting per command
-    ├── flags.ts             # Custom Oclif flag/arg factories (bigintFlag, bigintArg)
-    ├── format.ts            # Display helpers
-    ├── paths.ts             # File path constants
-    ├── constants.ts         # Network defaults and RPC endpoints
-    └── umbra/               # Thin wrappers around @umbra-privacy/sdk
-        ├── client.ts        # IUmbraClient creation and storage
-        ├── signer.ts        # IUmbraSigner from a keypair file
-        ├── scanner.ts       # UTXO scanning helpers
-        └── seed-storage.ts  # File-based master seed persistence
-
-tests/
-└── commands/                # Bun tests mirroring the commands/ structure
-                             # ⚠️ Current tests are AI-generated — proper test coverage is in progress
-```
 
 To add a new command:
 1. Create a `.tsx` file in the appropriate `source/commands/` subfolder with a default-exported Ink component and a named-exported `Command` class.
