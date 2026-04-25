@@ -65,6 +65,17 @@ export type {
 } from './umbra/scanner.js';
 export {createUmbraSignerFromSolanaSigner} from './umbra/signer.js';
 
+/** Per-plugin config, wallet resolution, and RPC helpers for plugin authors */
+export {
+	type PluginConfig,
+	getPluginActiveUser,
+	getPluginRpc,
+	pluginConfigPath,
+	readPluginConfig,
+	resolvePluginUser,
+	writePluginConfig,
+} from './plugins.js';
+
 /** Error formatting */
 export {
 	type ErrorState,
