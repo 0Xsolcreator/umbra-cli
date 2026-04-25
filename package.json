@@ -12,16 +12,21 @@
 	"scripts": {
 		"build": "tsc && chmod +x dist/cli.js",
 		"dev": "tsc --watch",
-		"test": "prettier --check . && xo && bun test tests/",
-		"postinstall": "node scripts/postinstall.js"
+		"test": "prettier --check . && xo && bun test tests/"
+	},
+	"exports": {
+		"./lib": {
+			"types": "./dist/lib/index.d.ts",
+			"import": "./dist/lib/index.js"
+		}
 	},
 	"files": [
-		"dist",
-		"scripts"
+		"dist"
 	],
 	"dependencies": {
 		"@oclif/core": "^4.10.5",
 		"@oclif/plugin-help": "^6.2.44",
+		"@oclif/plugin-plugins": "^5.4.61",
 		"@solana/keychain-core": "^1.1.0",
 		"@solana/keychain-para": "^1.1.0",
 		"@solana/keychain-privy": "^1.1.0",
@@ -74,7 +79,8 @@
 			"target": "./dist/commands.js"
 		},
 		"plugins": [
-			"@oclif/plugin-help"
+			"@oclif/plugin-help",
+			"@oclif/plugin-plugins"
 		],
 		"topicSeparator": " ",
 		"helpClass": "./dist/help.js",
@@ -93,6 +99,9 @@
 			},
 			"utxo": {
 				"description": "Stealth UTXO commands"
+			},
+			"plugin": {
+				"description": "Manage umbra-cli plugins"
 			}
 		}
 	}
