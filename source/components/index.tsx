@@ -1,6 +1,10 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
 import InkSpinner from 'ink-spinner';
+import SelectInput from 'ink-select-input';
+
+import {fetchSupportedMints} from '../lib/relayer.js';
+import {KNOWN_MINT_SYMBOLS} from '../lib/constants.js';
 
 /** Loading indicator */
 export function Spinner({label}: {readonly label: string}) {
@@ -48,6 +52,60 @@ export function Row({
 				<Text dimColor>{label}</Text>
 			</Box>
 			<Text>{value}</Text>
+		</Box>
+	);
+}
+
+type MintPickerState =
+	| {status: 'loading'}
+	| {status: 'ready'; mints: readonly string[]}
+	| {status: 'error'; message: string};
+
+function mintLabel(mint: string): string {
+	const symbol = KNOWN_MINT_SYMBOLS[mint];
+	const short = `${mint.slice(0, 4)}…${mint.slice(-4)}`;
+	return symbol ? `${symbol}  (${short})` : short;
+}
+
+/**
+ * Fetches supported mints from the relayer and presents an interactive
+ * selector. Calls `onSelect` with the chosen mint address, or `onError`
+ * if the relayer is unreachable.
+ */
+export function MintPicker({
+	label = 'Select a token:',
+	onSelect,
+	onError,
+}: {
+	readonly label?: string;
+	readonly onSelect: (mint: string) => void;
+	readonly onError: (message: string) => void;
+}) {
+	const [state, setState] = useState<MintPickerState>({status: 'loading'});
+
+	useEffect(() => {
+		fetchSupportedMints()
+			.then(mints => setState({status: 'ready', mints}))
+			.catch((err: unknown) => {
+				const message = err instanceof Error ? err.message : String(err);
+				setState({status: 'error', message});
+				onError(message);
+			});
+	}, []);
+
+	if (state.status === 'loading')
+		return <Spinner label="Fetching supported tokens..." />;
+	if (state.status === 'error') return null;
+
+	const items = state.mints.map(mint => ({
+		label: mintLabel(mint),
+		value: mint,
+	}));
+
+	return (
+		<Box flexDirection="column">
+			<Text dimColor>{label}</Text>
+			<SelectInput items={items} onSelect={item => onSelect(item.value)} />
 		</Box>
 	);
 }

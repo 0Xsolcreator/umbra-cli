@@ -6,49 +6,52 @@ import {address} from '@solana/kit';
 import {type U64} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
-import {bigintArg} from '../../lib/flags.js';
-import {Spinner, ErrorMessage} from '../../components/index.js';
+import {bigintArg, bigintFlag} from '../../lib/flags.js';
+import {Spinner, ErrorMessage, MintPicker} from '../../components/index.js';
 import {formatWithdrawalError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
 
 type Props = {
-	args: [string, bigint];
+	args: [string | undefined, bigint];
 	options: {destination?: string};
 };
 
 type State =
+	| {status: 'picking'}
 	| {status: 'withdrawing'; stepLabel: string}
 	| {status: 'success'; queueSignature: string; callbackSignature?: string}
 	| ErrorState;
 
-export default function Withdraw({args: [mint, amount], options: opts}: Props) {
+export default function Withdraw({
+	args: [initialMint, amount],
+	options: opts,
+}: Props) {
 	const {exit} = useApp();
-	const [state, setState] = useState<State>({
-		status: 'withdrawing',
-		stepLabel: 'Preparing withdrawal...',
-	});
+	const [state, setState] = useState<State>(
+		initialMint === undefined
+			? {status: 'picking'}
+			: {status: 'withdrawing', stepLabel: 'Preparing withdrawal...'},
+	);
+	const [mint, setMint] = useState<string | undefined>(initialMint);
 
 	useEffect(() => {
+		if (state.status !== 'withdrawing' || mint === undefined) return;
+
 		async function run() {
 			try {
 				const client = await getClient();
-
 				const destination = opts.destination ?? client.signer.address;
-
 				setState({
 					status: 'withdrawing',
 					stepLabel: `Withdrawing to ${destination}...`,
 				});
-
 				const withdraw =
 					getEncryptedBalanceToPublicBalanceDirectWithdrawerFunction({client});
-
 				const result = await withdraw(
 					address(destination),
-					address(mint),
+					address(mint!),
 					amount as U64,
 				);
-
 				setState({
 					status: 'success',
 					queueSignature: result.queueSignature,
@@ -62,7 +65,24 @@ export default function Withdraw({args: [mint, amount], options: opts}: Props) {
 		}
 
 		void run();
-	}, []);
+	}, [state.status, mint]);
+
+	if (state.status === 'picking')
+		return (
+			<MintPicker
+				onSelect={selected => {
+					setMint(selected);
+					setState({
+						status: 'withdrawing',
+						stepLabel: 'Preparing withdrawal...',
+					});
+				}}
+				onError={message => {
+					setState({status: 'error', message});
+					exit();
+				}}
+			/>
+		);
 
 	if (state.status === 'withdrawing')
 		return <Spinner label={state.stepLabel} />;
@@ -87,11 +107,18 @@ export class WithdrawCommand extends Command {
 		'Move tokens from your encrypted ETA back to a public wallet';
 
 	static override args = {
-		mint: Args.string({description: 'Mint address', required: true}),
-		amount: bigintArg({description: 'Amount in base units', required: true}),
+		mint: Args.string({
+			description: 'Mint address — omit to pick interactively',
+			required: false,
+		}),
+		amount: bigintArg({description: 'Amount in base units', required: false}),
 	};
 
 	static override flags = {
+		amount: bigintFlag({
+			description: 'Amount in base units (alternative to positional arg)',
+			required: false,
+		}),
 		destination: Flags.string({
 			description:
 				'Destination wallet address (defaults to your own address)',
@@ -101,9 +128,14 @@ export class WithdrawCommand extends Command {
 
 	async run() {
 		const {args, flags} = await this.parse(WithdrawCommand);
+		const amount = args.amount ?? flags.amount;
+		if (amount === undefined) {
+			this.error('Missing amount. Pass it as a positional arg or with --amount <n>');
+		}
+
 		const {waitUntilExit} = render(
 			<Withdraw
-				args={[args.mint, args.amount]}
+				args={[args.mint, amount]}
 				options={{destination: flags.destination}}
 			/>,
 		);

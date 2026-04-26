@@ -17,17 +17,18 @@ import {address} from '@solana/kit';
 import {type U64} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
-import {bigintArg} from '../../lib/flags.js';
-import {Spinner, ErrorMessage} from '../../components/index.js';
+import {bigintArg, bigintFlag} from '../../lib/flags.js';
+import {Spinner, ErrorMessage, MintPicker} from '../../components/index.js';
 import {formatCreateUtxoError} from '../../lib/errors.js';
 import {type ErrorState} from '../../lib/errors.js';
 
 type Props = {
-	args: [string, bigint];
+	args: [string | undefined, bigint];
 	options: {from: string; receiver?: string};
 };
 
 type State =
+	| {status: 'picking'}
 	| {status: 'creating'; stepLabel: string}
 	| {
 			status: 'success';
@@ -38,14 +39,21 @@ type State =
 	  }
 	| ErrorState;
 
-export default function Create({args: [mint, amount], options: opts}: Props) {
+export default function Create({
+	args: [initialMint, amount],
+	options: opts,
+}: Props) {
 	const {exit} = useApp();
-	const [state, setState] = useState<State>({
-		status: 'creating',
-		stepLabel: 'Preparing UTXO...',
-	});
+	const [state, setState] = useState<State>(
+		initialMint === undefined
+			? {status: 'picking'}
+			: {status: 'creating', stepLabel: 'Preparing UTXO...'},
+	);
+	const [mint, setMint] = useState<string | undefined>(initialMint);
 
 	useEffect(() => {
+		if (state.status !== 'creating' || mint === undefined) return;
+
 		async function run() {
 			try {
 				const client = await getClient();
@@ -61,7 +69,7 @@ export default function Create({args: [mint, amount], options: opts}: Props) {
 
 				const createArgs = {
 					destinationAddress: address(destination),
-					mint: address(mint),
+					mint: address(mint!),
 					amount: amount as U64,
 				};
 
@@ -133,7 +141,21 @@ export default function Create({args: [mint, amount], options: opts}: Props) {
 		}
 
 		void run();
-	}, []);
+	}, [state.status, mint]);
+
+	if (state.status === 'picking')
+		return (
+			<MintPicker
+				onSelect={selected => {
+					setMint(selected);
+					setState({status: 'creating', stepLabel: 'Preparing UTXO...'});
+				}}
+				onError={message => {
+					setState({status: 'error', message});
+					exit();
+				}}
+			/>
+		);
 
 	if (state.status === 'creating') return <Spinner label={state.stepLabel} />;
 	if (state.status === 'error')
@@ -162,11 +184,18 @@ export class CreateCommand extends Command {
 	static override description = 'Create a new stealth UTXO';
 
 	static override args = {
-		mint: Args.string({description: 'Mint address', required: true}),
-		amount: bigintArg({description: 'Amount in base units', required: true}),
+		mint: Args.string({
+			description: 'Mint address — omit to pick interactively',
+			required: false,
+		}),
+		amount: bigintArg({description: 'Amount in base units', required: false}),
 	};
 
 	static override flags = {
+		amount: bigintFlag({
+			description: 'Amount in base units (alternative to positional arg)',
+			required: false,
+		}),
 		from: Flags.string({
 			description:
 				'Token source: "public" (ATA) or "encrypted" (ETA) balance',
@@ -182,9 +211,14 @@ export class CreateCommand extends Command {
 
 	async run() {
 		const {args, flags} = await this.parse(CreateCommand);
+		const amount = args.amount ?? flags.amount;
+		if (amount === undefined) {
+			this.error('Missing amount. Pass it as a positional arg or with --amount <n>');
+		}
+
 		const {waitUntilExit} = render(
 			<Create
-				args={[args.mint, args.amount]}
+				args={[args.mint, amount]}
 				options={{from: flags.from, receiver: flags.receiver}}
 			/>,
 		);
