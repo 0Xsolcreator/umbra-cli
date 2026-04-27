@@ -84,7 +84,7 @@
 			},
 			{
 				"group": "Changelog",
-				"pages": ["changelog/v0.2.0"]
+				"pages": ["changelog/v0.2.2", "changelog/v0.2.0"]
 			}
 		]
 	}

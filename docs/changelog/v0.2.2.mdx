@@ -1,0 +1,50 @@
+---
+title: v0.2.2
+description: Plugin system, interactive token picker, and a smoother release pipeline.
+---
+
+<Info>
+Released April 26, 2026
+</Info>
+
+## New features
+
+### Plugins
+
+The CLI now supports plugins — npm packages that add new commands to `umbra`. Install one and its commands are available immediately, no restart required:
+
+```bash
+umbra plugin add jup-earn
+```
+
+Manage installed plugins from the terminal:
+
+- [`plugin add`](/commands/plugin/add) — install a plugin from npm
+- [`plugin list`](/commands/plugin/list) — see what's installed
+- [`plugin remove`](/commands/plugin/remove) — uninstall a plugin
+- [`plugin use`](/commands/plugin/use) — pin a plugin to a specific user
+
+Each plugin can be pinned to its own active user, so one plugin can sign with a different wallet than the one set globally.
+
+### Interactive token picker
+
+You can now omit the `<mint>` argument on token commands and pick from a list of supported mints fetched from the relayer. Common tokens like USDC, USDT, Wrapped SOL, and UMBRA are shown by symbol:
+
+```bash
+umbra eta deposit
+umbra eta balance
+umbra eta withdraw
+umbra utxo create
+```
+
+Pass a mint address directly to skip the picker, same as before. See [`eta deposit`](/commands/eta/deposit) and related commands for details.
+
+## Updates
+
+### Streamlined install
+
+The post-install script has been removed. Installs are quieter and faster, and there's nothing extra to configure after `npm install -g umbraprivacy-cli`.
+
+### Release pipeline
+
+Releases now ship to npm more reliably, so new versions land on `npm install` without manual intervention.
