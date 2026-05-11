@@ -17,10 +17,11 @@ Registration is idempotent. Each run checks which steps are already complete on-
 
 ## Options
 
-| Flag             | Default | Description                                           |
-| ---------------- | ------- | ----------------------------------------------------- |
-| `--confidential` | `true`  | Register the X25519 key for encrypted balance support |
-| `--anonymous`    | `true`  | Register the user commitment for mixer support        |
+| Flag             | Default     | Description                                           |
+| ---------------- | ----------- | ----------------------------------------------------- |
+| `--confidential` | `true`      | Register the X25519 key for encrypted balance support |
+| `--anonymous`    | `true`      | Register the user commitment for mixer support        |
+| `--user <name>`  | Active user | Register a specific configured user without changing the global active user. Useful for registering multiple users concurrently in automation. |
 
 ## Examples
 
@@ -33,6 +34,14 @@ umbra register --no-anonymous
 
 # Register only for the mixer, skip encrypted balance
 umbra register --no-confidential
+
+# Register a specific user without switching the active user
+umbra register --user alice
+
+# Register multiple users concurrently
+umbra register --user alice &
+umbra register --user bob &
+wait
 ```
 
 ## Checking registration status

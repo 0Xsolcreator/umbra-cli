@@ -16,6 +16,7 @@ type Props = {
 	options: {
 		confidential: boolean;
 		anonymous: boolean;
+		user?: string;
 	};
 };
 
@@ -33,7 +34,7 @@ export default function Register({options: opts}: Props) {
 	useEffect(() => {
 		async function run() {
 			try {
-				const client = await getClient();
+				const client = await getClient(opts.user);
 
 				const query = getUserAccountQuerierFunction({client});
 				const result = await query(client.signer.address);
@@ -140,6 +141,11 @@ export class RegisterCommand extends Command {
 			default: true,
 			allowNo: true,
 		}),
+		user: Flags.string({
+			description:
+				'User to register (defaults to the active user). Useful for registering multiple users concurrently without switching the global active user.',
+			required: false,
+		}),
 	};
 
 	async run() {
@@ -149,6 +155,7 @@ export class RegisterCommand extends Command {
 				options={{
 					confidential: flags.confidential,
 					anonymous: flags.anonymous,
+					user: flags.user,
 				}}
 			/>,
 		);
