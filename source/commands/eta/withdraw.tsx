@@ -13,7 +13,7 @@ import {type ErrorState} from '../../lib/errors.js';
 
 type Props = {
 	args: [string | undefined, bigint];
-	options: {destination?: string};
+	options: {destination?: string; user?: string};
 };
 
 type State =
@@ -39,7 +39,7 @@ export default function Withdraw({
 
 		async function run() {
 			try {
-				const client = await getClient();
+				const client = await getClient(opts.user);
 				const destination = opts.destination ?? client.signer.address;
 				setState({
 					status: 'withdrawing',
@@ -124,6 +124,11 @@ export class WithdrawCommand extends Command {
 				'Destination wallet address (defaults to your own address)',
 			required: false,
 		}),
+		user: Flags.string({
+			description:
+				'User to act as (defaults to the active user). Useful for running concurrent operations without switching the global active user.',
+			required: false,
+		}),
 	};
 
 	async run() {
@@ -136,7 +141,7 @@ export class WithdrawCommand extends Command {
 		const {waitUntilExit} = render(
 			<Withdraw
 				args={[args.mint, amount]}
-				options={{destination: flags.destination}}
+				options={{destination: flags.destination, user: flags.user}}
 			/>,
 		);
 		await waitUntilExit();

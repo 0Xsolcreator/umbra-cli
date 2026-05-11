@@ -12,7 +12,7 @@ import {type ErrorState} from '../../lib/errors.js';
 
 type Props = {
 	args: string[];
-	options: {all: boolean};
+	options: {all: boolean; user?: string};
 };
 
 type BalanceEntry = {mint: Address; result: QueryEncryptedBalanceResult};
@@ -70,7 +70,7 @@ function BalanceRow({mint, result}: BalanceEntry) {
 	);
 }
 
-export default function Balance({args: initialMints, options: {all}}: Props) {
+export default function Balance({args: initialMints, options: {all, user}}: Props) {
 	const {exit} = useApp();
 
 	const initialState: State = all
@@ -99,7 +99,7 @@ export default function Balance({args: initialMints, options: {all}}: Props) {
 		const {mints} = state;
 		async function run() {
 			try {
-				const client = await getClient();
+				const client = await getClient(user);
 				const query = getEncryptedBalanceQuerierFunction({client});
 				const balances = await query(mints.map(m => address(m)));
 				const entries: BalanceEntry[] = [...balances.entries()].map(
@@ -165,12 +165,17 @@ export class BalanceCommand extends Command {
 			description: 'Query all tokens supported by the relayer',
 			default: false,
 		}),
+		user: Flags.string({
+			description:
+				'User to act as (defaults to the active user). Useful for running concurrent operations without switching the global active user.',
+			required: false,
+		}),
 	};
 
 	async run() {
 		const {argv, flags} = await this.parse(BalanceCommand);
 		const {waitUntilExit} = render(
-			<Balance args={argv as string[]} options={{all: flags.all}} />,
+			<Balance args={argv as string[]} options={{all: flags.all, user: flags.user}} />,
 		);
 		await waitUntilExit();
 	}

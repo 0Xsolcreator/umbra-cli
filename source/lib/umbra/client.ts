@@ -26,28 +26,9 @@ export async function setClient(
 	_client = await getUmbraClient(args, deps);
 }
 
-/**
- * Build (or return the cached) Umbra client for the currently-active user.
- *
- * Reads `~/.umbra-cli/config.json` for network settings and the active
- * user name, then loads `~/.umbra-cli/users/<name>.json` to discover the
- * backend + params. The backend registry constructs a `SolanaSigner`,
- * which we wrap in an `IUmbraSigner` adapter for the SDK.
- *
- * Throws `NoActiveUserError` when no user has been selected yet — the
- * commands that depend on a client surface this with instructions to run
- * `umbra user add` / `umbra user use`.
- */
-export async function getClient(): Promise<UmbraClient> {
-	if (_client) return _client;
-
+async function buildClientForUser(userName: string): Promise<UmbraClient> {
 	const config = await readConfig();
-
-	if (!config.activeUser) {
-		throw new NoActiveUserError();
-	}
-
-	const user = await readUser(config.activeUser);
+	const user = await readUser(userName);
 
 	if (!isBackendName(user.backend)) {
 		throw new Error(
@@ -61,7 +42,7 @@ export async function getClient(): Promise<UmbraClient> {
 	});
 	const signer = createUmbraSignerFromSolanaSigner(solanaSigner);
 
-	await setClient(
+	return getUmbraClient(
 		{
 			signer,
 			network: config.network,
@@ -72,6 +53,36 @@ export async function getClient(): Promise<UmbraClient> {
 		},
 		{masterSeedStorage: createFileSeedStorage(user.name)},
 	);
+}
 
-	return _client!;
+/**
+ * Build (or return the cached) Umbra client.
+ *
+ * When `userName` is provided the client is built for that user directly,
+ * bypassing the active-user config. This lets concurrent automation threads
+ * each target their own user without racing to mutate the global active-user
+ * pointer.
+ *
+ * With no argument, reads `config.activeUser` and caches the result for the
+ * lifetime of the process (safe because each CLI invocation is one process).
+ *
+ * Throws `NoActiveUserError` when no user has been selected and no explicit
+ * name was given — commands surface this with instructions to run
+ * `umbra user add` / `umbra user use`.
+ */
+export async function getClient(userName?: string): Promise<UmbraClient> {
+	if (userName !== undefined) {
+		return buildClientForUser(userName);
+	}
+
+	if (_client) return _client;
+
+	const config = await readConfig();
+
+	if (!config.activeUser) {
+		throw new NoActiveUserError();
+	}
+
+	_client = await buildClientForUser(config.activeUser);
+	return _client;
 }
