@@ -7,19 +7,24 @@ import {type U64} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
 import {bigintArg, bigintFlag} from '../../lib/flags.js';
-import {Spinner, ErrorMessage, MintPicker} from '../../components/index.js';
-import {formatWithdrawalError} from '../../lib/errors.js';
-import {type ErrorState} from '../../lib/errors.js';
+import {Spinner, ErrorMessage, SubmittedMessage, MintPicker} from '../../components/index.js';
+import {
+	formatWithdrawalError,
+	isBlockheightExceededError,
+	type ErrorState,
+	type SubmittedState,
+} from '../../lib/errors.js';
 
 type Props = {
 	args: [string | undefined, bigint];
-	options: {destination?: string; user?: string};
+	options: {destination?: string; user?: string; noAwaitCallback: boolean};
 };
 
 type State =
 	| {status: 'picking'}
 	| {status: 'withdrawing'; stepLabel: string}
 	| {status: 'success'; queueSignature: string; callbackSignature?: string}
+	| SubmittedState
 	| ErrorState;
 
 export default function Withdraw({
@@ -46,7 +51,12 @@ export default function Withdraw({
 					stepLabel: `Withdrawing to ${destination}...`,
 				});
 				const withdraw =
-					getEncryptedBalanceToPublicBalanceDirectWithdrawerFunction({client});
+					getEncryptedBalanceToPublicBalanceDirectWithdrawerFunction(
+						{client},
+						opts.noAwaitCallback
+							? {arcium: {awaitComputationFinalization: false}}
+							: undefined,
+					);
 				const result = await withdraw(
 					address(destination),
 					address(mint!),
@@ -59,7 +69,16 @@ export default function Withdraw({
 				});
 				exit();
 			} catch (err: unknown) {
-				setState({status: 'error', message: formatWithdrawalError(err)});
+				if (isBlockheightExceededError(err)) {
+					setState({
+						status: 'submitted',
+						message:
+							"Confirmation timed out — the transaction likely landed. Verify with 'umbra eta balance'.",
+					});
+				} else {
+					setState({status: 'error', message: formatWithdrawalError(err)});
+				}
+
 				exit();
 			}
 		}
@@ -86,6 +105,13 @@ export default function Withdraw({
 
 	if (state.status === 'withdrawing')
 		return <Spinner label={state.stepLabel} />;
+	if (state.status === 'submitted')
+		return (
+			<SubmittedMessage
+				title="Withdrawal submitted"
+				detail={state.message}
+			/>
+		);
 	if (state.status === 'error')
 		return <ErrorMessage title="Withdrawal failed" detail={state.message} />;
 
@@ -129,6 +155,11 @@ export class WithdrawCommand extends Command {
 				'User to act as (defaults to the active user). Useful for running concurrent operations without switching the global active user.',
 			required: false,
 		}),
+		'no-await-callback': Flags.boolean({
+			description:
+				'Return immediately after the queue transaction confirms without waiting for the Arcium MPC callback. Use this if the CLI hangs after the on-chain transaction already landed.',
+			default: false,
+		}),
 	};
 
 	async run() {
@@ -141,7 +172,11 @@ export class WithdrawCommand extends Command {
 		const {waitUntilExit} = render(
 			<Withdraw
 				args={[args.mint, amount]}
-				options={{destination: flags.destination, user: flags.user}}
+				options={{
+					destination: flags.destination,
+					user: flags.user,
+					noAwaitCallback: flags['no-await-callback'],
+				}}
 			/>,
 		);
 		await waitUntilExit();

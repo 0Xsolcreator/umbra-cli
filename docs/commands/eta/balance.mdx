@@ -13,7 +13,14 @@ Fetches and decrypts your encrypted token balances for one or more mints. For ac
 
 | Argument | Description |
 |---|---|
-| `<mint> [mint...]` | One or more SPL or Token-2022 mint addresses |
+| `<mint> [mint...]` | One or more SPL or Token-2022 mint addresses. Omit to pick interactively. |
+
+## Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--all` | `false` | Query every token supported by the relayer in one call. |
+| `--user <name>` | Active user | Run as a specific configured user without changing the global active user. Useful when running concurrent balance checks across multiple users in automation. |
 
 ## Examples
 
@@ -25,6 +32,12 @@ umbra eta balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 umbra eta balance \
   EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v \
   So11111111111111111111111111111111111111112
+
+# Query all relayer-supported tokens
+umbra eta balance --all
+
+# Check balance for a specific user (without switching the active user)
+umbra eta balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v --user alice
 ```
 
 ## Output

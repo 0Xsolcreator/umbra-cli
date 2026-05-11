@@ -60,7 +60,8 @@
 						"pages": [
 							"commands/eta/deposit",
 							"commands/eta/balance",
-							"commands/eta/withdraw"
+							"commands/eta/withdraw",
+							"commands/eta/convert"
 						]
 					},
 					{

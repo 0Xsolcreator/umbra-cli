@@ -24,7 +24,9 @@ Amounts are in base units. For a token with 6 decimals, `1000000` equals 1 token
 
 | Flag | Default | Description |
 |---|---|---|
-| `--destination <address>` | Your own address | Public wallet address to receive the withdrawn tokens |
+| `--destination <address>` | Your own address | Public wallet address to receive the withdrawn tokens. |
+| `--user <name>` | Active user | Run as a specific configured user without changing the global active user. |
+| `--no-await-callback` | `false` | Return immediately after the queue transaction confirms, without waiting for the Arcium MPC callback. |
 
 ## Examples
 
@@ -35,6 +37,9 @@ umbra eta withdraw EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000
 # Withdraw to a different address
 umbra eta withdraw EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000 \
   --destination 9xQe...fK2p
+
+# Return as soon as the queue transaction lands (no callback wait)
+umbra eta withdraw EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000 --no-await-callback
 ```
 
 ## Output
@@ -45,7 +50,11 @@ umbra eta withdraw EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000 \
   Callback: 7pQs...aW4x
 ```
 
-`Queue` is the handler transaction. `Callback` is the on-chain transaction that finalizes the transfer to your public ATA after MPC processing.
+`Queue` is the handler transaction. `Callback` is the on-chain transaction that finalizes the transfer to your public ATA after MPC processing. When `--no-await-callback` is passed, only `Queue` is printed.
+
+<Tip>
+Use `--no-await-callback` in automated pipelines or if the CLI hangs after the on-chain transaction has already landed. The tokens are transferred once the queue transaction confirms — the Arcium callback is processed independently and does not need to be observed by the CLI.
+</Tip>
 
 ## Prerequisites
 

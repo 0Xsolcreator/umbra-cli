@@ -27,6 +27,8 @@ Amounts are in base units, not display units. For a token with 6 decimals, `1000
 | Flag | Default | Description |
 |---|---|---|
 | `--recipient <address>` | Your own address | Wallet address to credit. Deposits to any registered Umbra user. |
+| `--user <name>` | Active user | Run as a specific configured user without changing the global active user. |
+| `--no-await-callback` | `false` | Return immediately after the queue transaction confirms, without waiting for the Arcium MPC callback. |
 
 ## Examples
 
@@ -37,6 +39,9 @@ umbra eta deposit EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100000000
 # Deposit 50 USDC into another user's encrypted balance
 umbra eta deposit EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000 \
   --recipient GsbwXfJraMomNxBcpR3DBFyKCCmN9SKGzKFJBNKxRFkT
+
+# Return as soon as the queue transaction lands (no callback wait)
+umbra eta deposit EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100000000 --no-await-callback
 ```
 
 ## Output
@@ -47,7 +52,11 @@ umbra eta deposit EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50000000 \
   Callback: 8aLr...nQ9w
 ```
 
-`Queue` is the handler transaction that queues the MPC computation. `Callback` is the on-chain transaction that finalizes the deposit after MPC processing.
+`Queue` is the handler transaction that queues the MPC computation. `Callback` is the on-chain transaction that finalizes the deposit after MPC processing. When `--no-await-callback` is passed, only `Queue` is printed.
+
+<Tip>
+Use `--no-await-callback` in automated pipelines or when the network is slow. The deposit is complete once the queue transaction lands — the callback is processed by the Arcium network independently and does not need to be observed by the CLI.
+</Tip>
 
 <Warning>
 The depositor's wallet address, the recipient address, and the gross transfer amount are all visible on-chain. Only the resulting encrypted balance is hidden. Deposits are not anonymous by themselves — use the mixer (`utxo create`) for unlinkable transfers.

@@ -1,0 +1,86 @@
+---
+title: eta convert
+description: Convert an MXE-encrypted balance to shared mode so it can be withdrawn.
+---
+
+```bash
+umbra eta convert [mint...] [options]
+```
+
+Converts one or more encrypted token accounts from **MXE mode** (network-encrypted, processed by the Arcium MPC cluster) to **shared mode** (X25519-encrypted, readable client-side). This is a prerequisite for `eta withdraw` when your balance was received through the Umbra protocol — for example, via a UTXO claim or a network grant.
+
+If you run `eta withdraw` and see _"Transaction simulation failed"_, check `eta balance` first. A result of _"MXE mode (cannot decrypt client-side)"_ means you need to run `eta convert` before withdrawing.
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `[mint...]` | One or more mint addresses to convert. Omit to pick interactively. |
+
+## Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--all` | `false` | Convert every token supported by the relayer in one shot |
+| `--user <name>` | Active user | Run as a specific user without changing the global active user |
+
+## Examples
+
+```bash
+# Convert a single mint interactively (picker shown if no mint is given)
+umbra eta convert
+
+# Convert USDC
+umbra eta convert EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Convert multiple mints at once
+umbra eta convert EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v So11111111111111111111111111111111111111112
+
+# Convert all relayer-supported tokens
+umbra eta convert --all
+
+# Convert as a specific user (useful in multi-user automation)
+umbra eta convert EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v --user alice
+```
+
+## Output
+
+```
+✓ Converted 1 ETA to shared mode
+  EPjF…t1v: 3mNr...hJ8k
+```
+
+Each converted mint is listed with its transaction signature. Mints already in shared mode are reported without error:
+
+```
+✓ Already in shared mode — no conversion needed
+  EPjF…t1v
+```
+
+## Typical workflow
+
+```bash
+# 1. Check your balance — see "MXE mode (cannot decrypt client-side)"
+umbra eta balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# 2. Convert to shared mode
+umbra eta convert EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# 3. Now withdraw works
+umbra eta withdraw EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100000
+```
+
+## When do balances end up in MXE mode?
+
+A balance is in MXE mode when it arrived via the Umbra protocol itself rather than through a standard `eta deposit`:
+
+- Claiming a UTXO into your encrypted balance (`utxo claim --to encrypted`)
+- Receiving a network compliance grant
+- Being the recipient of a protocol-level transfer
+
+Standard `eta deposit` creates a shared-mode balance when your user account has an X25519 key registered (i.e. you ran `umbra register --confidential`).
+
+## Prerequisites
+
+- A user must be added and active (`umbra user add` / `umbra user use`).
+- The token account must exist on-chain and be in MXE mode. Accounts already in shared mode or not yet initialised are skipped with an explanatory message.

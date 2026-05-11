@@ -5,10 +5,27 @@ import {
 	isCreateUtxoError,
 	isFetchUtxosError,
 	isClaimUtxoError,
+	isConversionError,
 	// eslint-disable-next-line n/file-extension-in-import
 } from '@umbra-privacy/sdk/errors';
 
 export type ErrorState = {status: 'error'; message: string};
+
+// "Submitted" means the transaction was sent but confirmation timed out
+// (SOLANA_ERROR__BLOCK_HEIGHT_EXCEEDED). The operation likely landed on-chain.
+export type SubmittedState = {status: 'submitted'; message: string};
+
+const BLOCKHEIGHT_EXCEEDED_FRAGMENT =
+	'The network has progressed past the last block';
+
+export function isBlockheightExceededError(err: unknown): boolean {
+	if (!(err instanceof Error)) return false;
+	if (err.message.includes(BLOCKHEIGHT_EXCEEDED_FRAGMENT)) return true;
+	const cause = (err as Error & {cause?: unknown}).cause;
+	if (cause instanceof Error)
+		return cause.message.includes(BLOCKHEIGHT_EXCEEDED_FRAGMENT);
+	return false;
+}
 
 export function formatError(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
@@ -167,6 +184,27 @@ export function formatFetchUtxosError(error: unknown): string {
 
 		default: {
 			return `Scan failed at stage "${error.stage}": ${error.message}`;
+		}
+	}
+}
+
+export function formatConversionError(error: unknown): string {
+	if (!isConversionError(error)) return formatError(error);
+	switch (error.stage) {
+		case 'account-fetch': {
+			return `Could not fetch account state — check RPC connectivity: ${error.message}`;
+		}
+
+		case 'transaction-sign': {
+			return 'Transaction signing cancelled.';
+		}
+
+		case 'transaction-send': {
+			return `${error.message} — check on-chain state before retrying.`;
+		}
+
+		default: {
+			return `Conversion failed at stage "${error.stage}": ${error.message}`;
 		}
 	}
 }

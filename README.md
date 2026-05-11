@@ -58,6 +58,7 @@ umbra eta balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 | `umbra eta deposit <mint> <amount>` | Move tokens into your encrypted balance |
 | `umbra eta balance <mint...>` | Decrypt and display your encrypted balances |
 | `umbra eta withdraw <mint> <amount>` | Move tokens from your encrypted balance back to your wallet |
+| `umbra eta convert [mint...]` | Convert an MXE-encrypted balance to shared mode (required before withdrawing a balance received via the protocol) |
 | `umbra utxo create <mint> <amount>` | Create an anonymous stealth UTXO in the mixer |
 | `umbra utxo scan` | Scan the chain for UTXOs belonging to you |
 | `umbra utxo claim` | Scan and claim all found UTXOs |

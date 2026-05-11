@@ -14,6 +14,7 @@ import {RegisterCommand} from './commands/register.js';
 import {DepositCommand} from './commands/eta/deposit.js';
 import {BalanceCommand} from './commands/eta/balance.js';
 import {WithdrawCommand} from './commands/eta/withdraw.js';
+import {ConvertCommand} from './commands/eta/convert.js';
 import {CreateCommand} from './commands/utxo/create.js';
 import {ScanCommand} from './commands/utxo/scan.js';
 import {ClaimCommand} from './commands/utxo/claim.js';
@@ -33,6 +34,7 @@ const commands: Record<string, Command.Class> = {
 	'eta:deposit': DepositCommand,
 	'eta:balance': BalanceCommand,
 	'eta:withdraw': WithdrawCommand,
+	'eta:convert': ConvertCommand,
 	'utxo:create': CreateCommand,
 	'utxo:scan': ScanCommand,
 	'utxo:claim': ClaimCommand,

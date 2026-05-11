@@ -36,6 +36,27 @@ export function ErrorMessage({
 	);
 }
 
+/**
+ * Warning for transactions that were submitted but whose confirmation timed
+ * out (blockhash expired). The operation likely landed — caller should verify.
+ */
+export function SubmittedMessage({
+	title,
+	detail,
+}: {
+	readonly title: string;
+	readonly detail: string;
+}) {
+	return (
+		<Box flexDirection="column">
+			<Text color="yellow">⚠ {title}</Text>
+			<Box marginTop={1} marginLeft={2}>
+				<Text dimColor>{detail}</Text>
+			</Box>
+		</Box>
+	);
+}
+
 /** Fixed-width label column next to a value — used in summary views. */
 export function Row({
 	label,

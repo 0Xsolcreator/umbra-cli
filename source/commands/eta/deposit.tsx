@@ -7,19 +7,24 @@ import {type U64} from '@umbra-privacy/sdk/types';
 
 import {getClient} from '../../lib/umbra/client.js';
 import {bigintArg, bigintFlag} from '../../lib/flags.js';
-import {Spinner, ErrorMessage, MintPicker} from '../../components/index.js';
-import {formatDepositError} from '../../lib/errors.js';
-import {type ErrorState} from '../../lib/errors.js';
+import {Spinner, ErrorMessage, SubmittedMessage, MintPicker} from '../../components/index.js';
+import {
+	formatDepositError,
+	isBlockheightExceededError,
+	type ErrorState,
+	type SubmittedState,
+} from '../../lib/errors.js';
 
 type Props = {
 	args: [string | undefined, bigint];
-	options: {recipient?: string; user?: string};
+	options: {recipient?: string; user?: string; noAwaitCallback: boolean};
 };
 
 type State =
 	| {status: 'picking'; amount: bigint | undefined}
 	| {status: 'depositing'; stepLabel: string}
 	| {status: 'success'; queueSignature: string; callbackSignature?: string}
+	| SubmittedState
 	| ErrorState;
 
 export default function Deposit({args: [initialMint, amount], options: opts}: Props) {
@@ -40,7 +45,12 @@ export default function Deposit({args: [initialMint, amount], options: opts}: Pr
 				const destination = opts.recipient ?? client.signer.address;
 				setState({status: 'depositing', stepLabel: 'Submitting deposit...'});
 				const deposit =
-					getPublicBalanceToEncryptedBalanceDirectDepositorFunction({client});
+					getPublicBalanceToEncryptedBalanceDirectDepositorFunction(
+						{client},
+						opts.noAwaitCallback
+							? {arcium: {awaitComputationFinalization: false}}
+							: undefined,
+					);
 				const result = await deposit(
 					address(destination),
 					address(mint!),
@@ -53,7 +63,16 @@ export default function Deposit({args: [initialMint, amount], options: opts}: Pr
 				});
 				exit();
 			} catch (err: unknown) {
-				setState({status: 'error', message: formatDepositError(err)});
+				if (isBlockheightExceededError(err)) {
+					setState({
+						status: 'submitted',
+						message:
+							"Confirmation timed out — the transaction likely landed. Verify with 'umbra eta balance'.",
+					});
+				} else {
+					setState({status: 'error', message: formatDepositError(err)});
+				}
+
 				exit();
 			}
 		}
@@ -76,6 +95,10 @@ export default function Deposit({args: [initialMint, amount], options: opts}: Pr
 		);
 
 	if (state.status === 'depositing') return <Spinner label={state.stepLabel} />;
+	if (state.status === 'submitted')
+		return (
+			<SubmittedMessage title="Deposit submitted" detail={state.message} />
+		);
 	if (state.status === 'error')
 		return <ErrorMessage title="Deposit failed" detail={state.message} />;
 
@@ -119,6 +142,11 @@ export class DepositCommand extends Command {
 				'User to act as (defaults to the active user). Useful for running concurrent operations without switching the global active user.',
 			required: false,
 		}),
+		'no-await-callback': Flags.boolean({
+			description:
+				'Return immediately after the queue transaction confirms without waiting for the Arcium MPC callback. Use this if the CLI hangs after the on-chain transaction already landed.',
+			default: false,
+		}),
 	};
 
 	async run() {
@@ -131,7 +159,11 @@ export class DepositCommand extends Command {
 		const {waitUntilExit} = render(
 			<Deposit
 				args={[args.mint, amount]}
-				options={{recipient: flags.recipient, user: flags.user}}
+				options={{
+					recipient: flags.recipient,
+					user: flags.user,
+					noAwaitCallback: flags['no-await-callback'],
+				}}
 			/>,
 		);
 		await waitUntilExit();
